@@ -91,7 +91,8 @@ export type EntityType =
   // Aztec enemies
   | 'jaguarWarrior' // patrols, crouches, lunges
   | 'serpent' // Feathered Serpent — flying sine patrol
-  | 'sentinel'; // Sun Stone Sentinel — stationary dart turret
+  | 'sentinel' // Sun Stone Sentinel — stationary dart turret
+  | 'relic'; // Aztec Relic / Map Fragment — one per route, 3 per level
 
 /** Key/seal colors for colored keys + locked goals. */
 export type KeyColor = 'jade' | 'gold' | 'obsidian';
@@ -151,6 +152,8 @@ export interface LevelData {
   builtin?: boolean;
   /** Optional map "tx,ty" -> entity kind for fixed ? Block contents. */
   questionContents?: Record<string, string>;
+  /** Par time in seconds. Beating the level under par with all relics is the gold challenge. */
+  parTime?: number;
 }
 
 export interface WorldData {

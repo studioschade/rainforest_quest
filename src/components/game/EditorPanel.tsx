@@ -76,6 +76,7 @@ const SPECIAL_ITEMS: { name: string; entity: string }[] = [
   { name: 'Jade Axe', entity: 'axe' },
   { name: 'Warp Jar', entity: 'warpJar' },
   { name: 'Player Start', entity: 'playerStart' },
+  { name: 'Aztec Relic', entity: 'relic' },
 ];
 
 /** Items that can be placed inside a ? Block as fixed loot. */

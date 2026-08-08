@@ -19,6 +19,8 @@ export interface SessionState {
   lives: number;
   levelName: string;
   keys?: KeyColor[]; // session-level key inventory (normalized by startLevel)
+  relics?: Record<string, boolean>; // relicId -> collected
+  mapPieces?: Record<string, boolean>; // levelName -> map piece assembled
 }
 
 export interface InputState {
@@ -179,6 +181,7 @@ export class Engine {
   private sliceShift: number[] = [0, 0, 0, 0, 0];
   private warpAnim: { t: number; jar: Ent } | null = null;
   private texts: { x: number; y: number; t: number; text: string; color: string }[] = [];
+  private levelStartFrame = 0;
   editorWarpTarget = ''; // destination chosen in the editor for the next placed jar
   editorGoalLock: '' | KeyColor = ''; // seal color chosen in the editor for the next placed goal
   editorExtreme = false; // EXTREME flag for the next placed enemy
@@ -222,6 +225,7 @@ export class Engine {
     this.phase = 'play';
     this.phaseTimer = 0;
     this.bossDefeated = false;
+    this.levelStartFrame = this.tick;
     if (!useCheckpoint) this.checkpoint = null;
 
     let spawn: EntitySpawn = { type: 'playerStart', x: 2, y: 2 };
@@ -240,6 +244,13 @@ export class Engine {
     for (const e of level.entities) {
       if (e.type === 'playerStart') continue;
       this.spawnEntity(e);
+    }
+    // remove relics already collected in this session so they don't respawn
+    const collected = this.session.relics;
+    if (collected) {
+      for (const e of this.ents) {
+        if (e.kind === 'relic' && collected[e.target]) e.remove = true;
+      }
     }
 
     this.camX = Math.max(0, Math.min(this.player.x - VIEW_W * 0.35, level.width * TS - VIEW_W));
@@ -295,6 +306,9 @@ export class Engine {
       // colored keys — session inventory pickups
       case 'keyJade': case 'keyGold': case 'keyObsidian':
         mk(e.type, ex + 2, ey + 2, 12, 14, { state: 'still' });
+        break;
+      case 'relic':
+        mk('relic', ex + 2, ey + 2, 12, 14, { state: 'still', target: `relic:${this.level?.name ?? 'unknown'}:${e.x}:${e.y}` });
         break;
       // Aztec enemies
       case 'jaguarWarrior': mk('jaguarWarrior', ex + 1, ey - 8, 14, 22, { state: 'walk', vx: -0.5 }); break;
@@ -822,7 +836,14 @@ export class Engine {
         });
       }
       this.updateParticles();
-      if (this.phaseTimer > 150) this.onLevelComplete();
+      if (this.phaseTimer > 150) {
+        const stats = this.getLevelStats();
+        if (this.session && this.level && stats.total > 0 && stats.collected >= stats.total) {
+          if (!this.session.mapPieces) this.session.mapPieces = {};
+          this.session.mapPieces[this.level.name] = true;
+        }
+        this.onLevelComplete();
+      }
       return;
     }
 
@@ -1908,6 +1929,15 @@ export class Engine {
             this.sfx('checkpoint');
           }
           break;
+        case 'relic': {
+          e.remove = true;
+          if (!this.session.relics) this.session.relics = {};
+          this.session.relics[e.target] = true;
+          this.addScore(1500);
+          this.sfx('key'); // sparkly treasure sound
+          this.texts.push({ x: e.x + e.w / 2, y: e.y, t: 0, text: 'RELIC!', color: '#ffd977' });
+          break;
+        }
         case 'goal': {
           // locked goal: needs the matching key in the session inventory
           const lock = e.variant as '' | KeyColor;
@@ -2369,6 +2399,7 @@ export class Engine {
         break;
       }
       case 'keyJade': case 'keyGold': case 'keyObsidian': draw(e.kind, sx - 2, sy - 2 + this.itemBob(e)); break;
+      case 'relic': draw(`relic:${Math.floor(this.tick / 10) % 4}`, sx - 2, sy - 2 + this.itemBob(e)); break;
       case 'jaguarWarrior': draw(`jaguarWarrior:${e.state === 'crouch' ? 1 : anim2}`, sx - 1, sy - 2); break;
       case 'serpent': draw(`serpent:${Math.floor(e.frame / 10) % 2}`, sx, sy); break;
       case 'sentinel': draw(`sentinel:${e.t > (e.extreme ? 80 : 120) ? 1 : 0}`, sx, sy); break;
@@ -2396,7 +2427,7 @@ export class Engine {
 
   /** Gentle bob offset for placed/floating powerup items. */
   private itemBob(e: Ent): number {
-    if (!POWERUP_KINDS.has(e.kind) && !KEY_KINDS.has(e.kind)) return 0;
+    if (!POWERUP_KINDS.has(e.kind) && !KEY_KINDS.has(e.kind) && e.kind !== 'relic') return 0;
     if (e.state === 'still' || e.state === 'drift') return Math.sin(e.frame * 0.06) * 2;
     return 0;
   }
@@ -2512,6 +2543,16 @@ export class Engine {
     };
   }
 
+  /** Relic + timer state for the HUD. */
+  getLevelStats(): { time: number; parTime?: number; collected: number; total: number; mapPieces: number } {
+    const total = this.level ? this.level.entities.filter((e) => e.type === 'relic').length : 0;
+    const prefix = `relic:${this.level?.name ?? 'unknown'}:`;
+    const collected = this.session ? Object.keys(this.session.relics ?? {}).filter((k) => k.startsWith(prefix)).length : 0;
+    const mapPieces = this.session ? Object.keys(this.session.mapPieces ?? {}).length : 0;
+    const time = this.level ? (this.tick - this.levelStartFrame) / 60 : 0;
+    return { time, parTime: this.level?.parTime, collected, total, mapPieces };
+  }
+
   /** Item-kind -> texture name for HUD icons and editor previews. */
   static itemIcon(kind: string): string {
     const map: Record<string, string> = {
@@ -2526,6 +2567,8 @@ export class Engine {
       legs: 'grasshopperLegs:0', shrink: 'shrinkberry:0', capuchin: 'coinCapuchin',
       // temple keys
       keyJade: 'keyJade', keyGold: 'keyGold', keyObsidian: 'keyObsidian',
+      // collectibles
+      relic: 'relic:0',
     };
     return map[kind] ?? 'bloom:0';
   }

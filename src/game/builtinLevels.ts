@@ -50,6 +50,7 @@ function blank(name: string, theme: Theme, width: number): LevelData {
 // ======================================================================
 function build11(): LevelData {
   const l = blank('1-1 Emerald Floor', 'overworld', 280);
+  l.parTime = 360; // 6 minutes to find all 3 relics
   const top = GROUND_ROW;
 
   // main path ground columns with pits for jumps
@@ -81,12 +82,14 @@ function build11(): LevelData {
   fill(l, 48, top + 2, 10, 1, T.Wood);
   ent(l, 'beetle', 52, top + 1);
   coinRow(l, 50, top + 1, 6);
+  ent(l, 'relic', 56, top + 1); // relic 1: lower shortcut
 
   // ----- upper route part 1: high stone road (x 55-90) -----
   stairs(l, 55, top - 1, 7, 1, T.Stone);     // climb up at x 55
   fill(l, 62, 10, 28, 1, T.Stone);            // high road row 10
   coinRow(l, 65, 9, 8);
   set(l, 76, 6, T.Question);                  // hard-to-reach high block
+  ent(l, 'relic', 66, 8);                     // relic 2: upper route part 1
   ent(l, 'beetle', 84, 9);
   stairs(l, 90, top - 1, 7, -1, T.Stone);     // descend back to main path
 
@@ -123,6 +126,7 @@ function build11(): LevelData {
   fill(l, 161, 10, 34, 1, T.Stone);
   coinRow(l, 165, 9, 10);
   ent(l, 'tortoiseGreen', 178, 9);
+  ent(l, 'relic', 180, 8);          // relic 3: upper route part 2
   set(l, 188, 6, T.Question);
   ent(l, 'goldenBanana', 195, 9); // reward for taking the high road
   stairs(l, 195, top - 1, 7, -1, T.Stone);
@@ -176,6 +180,7 @@ function build12(): LevelData {
   st(183, 27, 14); // goal plateau, lower top row
 
   ent(l, 'playerStart', 2, top - 2);
+  l.parTime = 420; // 7 minutes — tight for all 3 relics
 
   // ceiling for cavern feel (sparse)
   fill(l, 0, 0, l.width, 2, T.Stone);
@@ -204,6 +209,7 @@ function build12(): LevelData {
   coinRow(l, 64, 9, 6);
   set(l, 72, 7, T.Question);
   ent(l, 'tortoiseTan', 68, 9);          // Tan Koopa guards the high road
+  ent(l, 'relic', 66, 8);                // relic 1: vertical shaft / upper route
   stairs(l, 74, top - 1, 6, -1, T.Stone); // descend back to main path
 
   // ---- main path lava pit 72-76, jump across via pillar ----
@@ -214,6 +220,7 @@ function build12(): LevelData {
   fill(l, 78, top + 3, 15, 1, T.Bridge);
   ent(l, 'beetle', 82, top + 2);
   coinRow(l, 84, top + 1, 6);
+  ent(l, 'relic', 84, top + 2);          // relic 2: lower shortcut / crumbling bridge
 
   // ---- spikes section (x 77-88 main path) ----
   fill(l, 78, top - 1, 6, 1, T.Spikes);
@@ -242,6 +249,7 @@ function build12(): LevelData {
   fill(l, 102, 9, 18, 1, T.Stone);
   coinRow(l, 106, 8, 8);
   ent(l, 'tortoiseRed', 114, 8);
+  ent(l, 'relic', 110, 8);          // relic 3: high road over lava lake
   set(l, 116, 6, T.Question);
 
   // ---- grotto treasures ----

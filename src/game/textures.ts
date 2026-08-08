@@ -1182,6 +1182,25 @@ function lockSprite(main: string, hi: string, dk: string): HTMLCanvasElement {
   });
 }
 
+/** Aztec Relic / Map Fragment — spinning golden-green shard. */
+function relicSprite(frame: number): HTMLCanvasElement {
+  return mk(16, 16, (c) => {
+    const glow = frame % 2 === 0 ? '#6fd66f' : '#3fae8a';
+    const core = frame % 2 === 0 ? '#ffd977' : '#ffe9a8';
+    // outer glow
+    px(c, 4, 2, 8, 12, 'rgba(110,230,140,0.25)');
+    px(c, 2, 4, 12, 8, 'rgba(110,230,140,0.25)');
+    // shard body
+    px(c, 6, 3, 4, 9, glow);
+    px(c, 5, 5, 6, 6, core);
+    px(c, 7, 6, 2, 3, '#fff8d0');
+    // sparkle
+    const sx = frame === 0 ? 10 : frame === 1 ? 4 : frame === 2 ? 11 : 3;
+    const sy = frame === 0 ? 4 : frame === 1 ? 10 : frame === 2 ? 11 : 3;
+    px(c, sx, sy, 2, 2, '#ffffff');
+  });
+}
+
 /** Jaguar Warrior — obsidian-spotted Aztec jaguar knight (16x24, 2 frames). */
 function jaguarWarriorSprite(frame: number): HTMLCanvasElement {
   return mk(16, 24, (c) => {
@@ -1611,6 +1630,8 @@ export function generateTextures(): TexAtlas {
   put('lock:jade', lockSprite('#3fae8a', '#7fe0bd', '#1f6e55'));
   put('lock:gold', lockSprite('#f2b632', '#ffe07a', '#b57e17'));
   put('lock:obsidian', lockSprite('#8a5ad6', '#b78af0', '#4a2a80'));
+  // relics / map fragments (4-frame spin)
+  for (let f = 0; f < 4; f++) put(`relic:${f}`, relicSprite(f));
   // Aztec enemies + EXTREME crown
   for (let f = 0; f < 2; f++) {
     put(`jaguarWarrior:${f}`, jaguarWarriorSprite(f));

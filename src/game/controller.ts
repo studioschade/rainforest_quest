@@ -303,7 +303,7 @@ export class GameController {
     this.world = { name: world.name, levels: world.levels.map(cloneLevel) };
     this.worldName = world.name;
     this.levelIndex = 0;
-    this.session = { score: 0, coins: 0, lives: 3, levelName: '' };
+    this.session = { score: 0, coins: 0, lives: 3, levelName: '', relics: {}, mapPieces: {} };
     this.warpStack = [];
     this.currentLevel = null; // assigned by beginLevelWithTransition
     this.testPlay = false;
@@ -359,7 +359,7 @@ export class GameController {
       this.overlay = 'none';
       eng.startLevel(cloneLevel(lvl), this.session);
     } else {
-      this.session = { score: 0, coins: 0, lives: 3, levelName: lvl.name };
+      this.session = { score: 0, coins: 0, lives: 3, levelName: lvl.name, relics: {}, mapPieces: {} };
       this.currentLevel = cloneLevel(lvl);
       this.overlay = 'none';
       eng.startLevel(cloneLevel(lvl), this.session);
@@ -483,7 +483,7 @@ export class GameController {
     this.currentLevel = null;
     this.editorLevelName = level.name;
     this.editorTheme = level.theme;
-    this.session = { score: 0, coins: 0, lives: 3, levelName: level.name };
+    this.session = { score: 0, coins: 0, lives: 3, levelName: level.name, relics: {}, mapPieces: {} };
     this.engine?.startLevel(cloneLevel(level), this.session);
     this.engine?.enterEditor();
     this.clearKeys();
@@ -519,7 +519,7 @@ export class GameController {
     if (eng.editorMode) {
       // Test Play
       this.testPlay = true;
-      this.session = { score: 0, coins: 0, lives: 3, levelName: eng.getLevel()?.name ?? '' };
+      this.session = { score: 0, coins: 0, lives: 3, levelName: eng.getLevel()?.name ?? '', relics: {}, mapPieces: {} };
       eng.exitEditor(true, this.session);
     } else {
       eng.enterEditor();

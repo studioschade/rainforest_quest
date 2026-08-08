@@ -23,11 +23,18 @@ function FxIcon({ kind, size = 18 }: { kind: string; size?: number }) {
   return <img src={url} width={size} height={size} className="pixelated inline-block" alt={kind} draggable={false} />;
 }
 
+function fmtTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 export function Hud() {
   const ctl = useRQ();
   const s = ctl.session;
   const inEditor = !!ctl.engine?.editorMode;
   const fx = ctl.engine?.getFx() ?? { form: 'none', timers: [], static: null };
+  const stats = ctl.engine?.getLevelStats();
   if (inEditor) return null;
   return (
     <div className="absolute top-3 left-0 right-0 pointer-events-none z-20 px-4">
@@ -61,6 +68,19 @@ export function Hud() {
         {ctl.glitchActive && (
           <div className="hud-chip rq-blink" style={{ borderColor: '#e05fd0', color: '#f7b8ee' }}>
             GLITCH ACTIVE
+          </div>
+        )}
+        {stats && stats.total > 0 && (
+          <div className={`hud-chip flex items-center gap-1.5 ${stats.collected >= stats.total ? 'rq-blink' : ''}`} title="Aztec Relics — find all 3 for the map piece">
+            <FxIcon kind="relic" size={16} />
+            <span className={stats.collected >= stats.total ? 'text-amber-300' : 'text-emerald-100'}>
+              {stats.collected}/{stats.total}
+            </span>
+          </div>
+        )}
+        {stats && stats.parTime !== undefined && (
+          <div className={`hud-chip font-mono ${stats.time > stats.parTime ? 'text-rose-300' : 'text-emerald-100'}`} title="Par time">
+            ⏱ {fmtTime(stats.time)} / {fmtTime(stats.parTime)}
           </div>
         )}
       </div>
