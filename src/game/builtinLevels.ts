@@ -293,66 +293,91 @@ function build12(): LevelData {
 // 1-3 Canopy Heights (canopy) — treetop platforms, verticality, eagles
 // ======================================================================
 function build13(): LevelData {
-  const l = blank('1-3 Canopy Heights', 'canopy', 150);
+  const l = blank('1-3 Canopy Heights', 'canopy', 210);
+  l.parTime = 360; // 6 minutes — tight for all 3 relics
   const leaf = (x: number, y: number, w: number) => fill(l, x, y, w, 1, T.Leaves);
   const wood = (x: number, y: number, w: number) => fill(l, x, y, w, 1, T.Wood);
   const cloud = (x: number, y: number, w: number) => fill(l, x, y, w, 1, T.Cloud);
+  const vine = (x: number, y: number, h: number) => fill(l, x, y, 1, h, T.Vine);
 
   // starting branch (low, right side of view)
-  leaf(0, 18, 10); fill(l, 0, 19, 10, 2, T.Leaves);
+  leaf(0, 18, 12); fill(l, 0, 19, 12, 2, T.Leaves);
   ent(l, 'playerStart', 2, 16);
 
+  // ---- lower vine tunnel (x 12-55) ----
+  // crawl under the canopy through vines and wood beams
+  wood(12, 19, 6); leaf(20, 20, 8); wood(30, 19, 5); leaf(38, 20, 6); wood(46, 19, 5);
+  coinRow(l, 14, 18, 4); coinRow(l, 32, 18, 3); coinRow(l, 48, 18, 3);
+  ent(l, 'beetle', 22, 18);
+  ent(l, 'monkey', 40, 19);
+  ent(l, 'relic', 50, 18); // relic 1: lower tunnel
+  vine(56, 14, 6); // climb back to main path
+
+  // ---- main canopy path (x 56-150) ----
   // ascending platforms
-  wood(12, 16, 4);
-  leaf(18, 15, 5);
-  cloud(25, 13, 3);
-  wood(30, 11, 4); coinRow(l, 30, 10, 3);
-  leaf(36, 13, 6);
-  ent(l, 'monkey', 38, 12);
+  wood(57, 16, 4);
+  leaf(63, 15, 5);
+  cloud(70, 13, 3);
+  wood(75, 11, 4); coinRow(l, 75, 10, 3);
+  leaf(81, 13, 6);
+  ent(l, 'monkey', 83, 12);
 
   // canopy road with durian
-  leaf(44, 15, 8);
-  ent(l, 'durian', 48, 14);
-  cloud(54, 12, 3);
-  leaf(59, 10, 5); coinRow(l, 59, 9, 4);
-  wood(66, 13, 3);
-  leaf(71, 15, 7);
-  ent(l, 'monkey', 74, 14);
+  leaf(89, 15, 8);
+  ent(l, 'durian', 93, 14);
+  cloud(99, 12, 3);
+  leaf(104, 10, 5); coinRow(l, 104, 9, 4);
+  wood(111, 13, 3);
+  leaf(116, 15, 7);
+  ent(l, 'monkey', 119, 14);
 
   // eagle patrol zone
-  ent(l, 'eagle', 60, 4);
+  ent(l, 'eagle', 95, 4);
 
   // high detour with bonus
-  cloud(80, 9, 3); cloud(85, 7, 3);
-  leaf(90, 8, 4); coinRow(l, 90, 7, 4);
-  set(l, 91, 4, T.Question);
-  ent(l, 'macawWings', 60, 8);
+  cloud(125, 9, 3); cloud(130, 7, 3);
+  leaf(135, 8, 4); coinRow(l, 135, 7, 4);
+  set(l, 136, 4, T.Question);
+  ent(l, 'macawWings', 105, 8);
 
   // main path continues
-  wood(80, 13, 4);
-  leaf(86, 15, 6);
-  ent(l, 'durian', 89, 14);
-  cloud(94, 12, 3);
-  leaf(99, 14, 8);
-  ent(l, 'monkey', 102, 13);
-  ent(l, 'checkpoint', 105, 12);
-  ent(l, 'grasshopperLegs', 100, 12);
+  wood(125, 13, 4);
+  leaf(131, 15, 6);
+  ent(l, 'durian', 134, 14);
+  cloud(139, 12, 3);
+  leaf(144, 14, 8);
+  ent(l, 'monkey', 147, 13);
+  ent(l, 'checkpoint', 150, 12);
+  ent(l, 'grasshopperLegs', 145, 12);
 
-  // drop-down section with vines
-  fill(l, 108, 6, 1, 8, T.Vine); fill(l, 110, 6, 1, 8, T.Vine);
-  leaf(109, 17, 5);
-  wood(116, 15, 3);
-  cloud(121, 13, 3);
-  leaf(126, 15, 6);
-  ent(l, 'eagle', 122, 5);
-  ent(l, 'jaguarPelt', 128, 13);
+  // ---- upper cloud highway (x 155-185) ----
+  cloud(155, 7, 4); cloud(162, 5, 4); cloud(170, 6, 5); cloud(178, 5, 4);
+  coinRow(l, 156, 6, 3); coinRow(l, 164, 4, 3); coinRow(l, 172, 5, 4);
+  ent(l, 'eagle', 168, 3);
+  ent(l, 'relic', 175, 5); // relic 2: cloud highway
 
-  // final ascent to the goal nest
-  wood(133, 12, 3);
-  leaf(137, 10, 5);
-  fill(l, 141, 11, 6, 1, T.Leaves);
-  fill(l, 141, 12, 6, 8, T.Leaves);
-  ent(l, 'goal', 143, 9);
+  // vertical descent back to main path
+  vine(184, 7, 8);
+  leaf(185, 15, 6);
+
+  // ---- final stretch / main path secret (x 186-205) ----
+  wood(186, 14, 4);
+  leaf(192, 12, 5);
+  cloud(199, 10, 3);
+  leaf(203, 13, 6);
+  ent(l, 'eagle', 196, 5);
+  ent(l, 'jaguarPelt', 200, 12);
+
+  // hidden high nest with relic 3
+  cloud(188, 4, 3);
+  ent(l, 'relic', 190, 3); // relic 3: hidden high nest
+
+  // goal nest
+  wood(204, 11, 3);
+  leaf(204, 9, 5);
+  fill(l, 200, 14, 6, 1, T.Leaves);
+  fill(l, 200, 15, 6, 5, T.Leaves);
+  ent(l, 'goal', 202, 8);
   return l;
 }
 
