@@ -45,91 +45,114 @@ function blank(name: string, theme: Theme, width: number): LevelData {
 }
 
 // ======================================================================
-// 1-1 Emerald Floor (overworld) — gentle intro, ~200 tiles wide
+// 1-1 Emerald Floor (overworld) — longer intro with branching paths
+// and vertical secrets. Width 280.
 // ======================================================================
 function build11(): LevelData {
-  const l = blank('1-1 Emerald Floor', 'overworld', 200);
+  const l = blank('1-1 Emerald Floor', 'overworld', 280);
+  const top = GROUND_ROW;
+
+  // main path ground columns with pits for jumps
   ground(l, 0, 30);
-  ground(l, 33, 22);
-  ground(l, 58, 26);
-  ground(l, 87, 30);
-  ground(l, 120, 24);
-  ground(l, 147, 53); // to the end
+  ground(l, 33, 25);   // x 33-57
+  ground(l, 61, 29);   // x 61-89
+  ground(l, 94, 36);   // x 94-129
+  ground(l, 134, 36);  // x 134-169
+  ground(l, 174, 36);  // x 174-209
+  ground(l, 214, 66, 14); // goal plateau x 214-279, top row 14
 
-  ent(l, 'playerStart', 2, GROUND_ROW - 2);
+  ent(l, 'playerStart', 2, top - 2);
 
-  // early question blocks
+  // early question blocks + beetle
   set(l, 14, 13, T.Question);
   set(l, 18, 13, T.Brick); set(l, 19, 13, T.Question); set(l, 20, 13, T.Brick);
-  ent(l, 'beetle', 22, GROUND_ROW - 1);
+  ent(l, 'beetle', 22, top - 1);
+  set(l, 6, top - 1, T.Foliage); set(l, 26, top - 1, T.Foliage);
 
-  // decorative foliage
-  set(l, 6, GROUND_ROW - 1, T.Foliage); set(l, 26, GROUND_ROW - 1, T.Foliage);
-  set(l, 40, GROUND_ROW - 1, T.Foliage); set(l, 71, GROUND_ROW - 1, T.Foliage);
-  set(l, 96, GROUND_ROW - 1, T.Foliage); set(l, 135, GROUND_ROW - 1, T.Foliage);
-
-  // first gap (x 30-32), then blocks after it
-  ent(l, 'beetle', 36, GROUND_ROW - 1);
+  // first gap (x 30-32), blocks after it
+  ent(l, 'beetle', 36, top - 1);
   set(l, 38, 13, T.Question);
 
-  // new powerups sprinkled through the jungle
-  ent(l, 'emberChili', 44, GROUND_ROW - 2);
-  ent(l, 'coinCapuchin', 126, GROUND_ROW - 2);
-  ent(l, 'goldenBanana', 162, GROUND_ROW - 2);
+  // ember chili early on the main path
+  ent(l, 'emberChili', 44, top - 2);
 
-  // coin arc over the second gap (55-57)
-  coinRow(l, 54, 12, 4);
+  // ----- lower shortcut tunnel (x 48-60) -----
+  // a narrow under-path route across the first pit; riskier but skips the gap
+  fill(l, 48, top + 2, 10, 1, T.Wood);
+  ent(l, 'beetle', 52, top + 1);
+  coinRow(l, 50, top + 1, 6);
 
-  // brick + question cluster w/ hidden bloom block
-  set(l, 62, 13, T.Brick); set(l, 63, 13, T.Question); set(l, 64, 13, T.Brick); set(l, 65, 13, T.Question); set(l, 66, 13, T.Brick);
-  set(l, 64, 9, T.Question); // high block
-  ent(l, 'tortoiseGreen', 74, GROUND_ROW - 2);
+  // ----- upper route part 1: high stone road (x 55-90) -----
+  stairs(l, 55, top - 1, 7, 1, T.Stone);     // climb up at x 55
+  fill(l, 62, 10, 28, 1, T.Stone);            // high road row 10
+  coinRow(l, 65, 9, 8);
+  set(l, 76, 6, T.Question);                  // hard-to-reach high block
+  ent(l, 'beetle', 84, 9);
+  stairs(l, 90, top - 1, 7, -1, T.Stone);     // descend back to main path
+
+  // ----- vertical coin shaft (x 98-104) -----
+  // climb the walls (frog/macaw) or drop from above to collect
+  fill(l, 98, 5, 7, 1, T.Stone);              // ceiling
+  fill(l, 98, 6, 1, 8, T.Stone);              // left wall
+  fill(l, 104, 6, 1, 8, T.Stone);             // right wall
+  coinRow(l, 99, 8, 4);
+  coinRow(l, 99, 11, 4);
+
+  // main path: brick/question cluster w/ hidden bloom block
+  set(l, 110, 13, T.Brick); set(l, 111, 13, T.Question); set(l, 112, 13, T.Brick);
+  set(l, 113, 13, T.Question); set(l, 114, 13, T.Brick);
+  set(l, 112, 8, T.Question); // high block
+  ent(l, 'tortoiseGreen', 120, top - 2);
 
   // hollow log with flytrap
-  fill(l, 80, GROUND_ROW - 2, 2, 2, T.LogBody);
-  set(l, 80, GROUND_ROW - 3, T.LogTop); set(l, 81, GROUND_ROW - 3, T.LogTop);
-  fill(l, 80, GROUND_ROW - 4, 2, 1, T.Empty);
-  ent(l, 'flytrap', 80, GROUND_ROW - 3);
+  fill(l, 128, top - 2, 2, 2, T.LogBody);
+  set(l, 128, top - 3, T.LogTop); set(l, 129, top - 3, T.LogTop);
+  ent(l, 'flytrap', 128, top - 3);
 
-  // bonus area: wooden platforms with coins
-  fill(l, 90, 13, 4, 1, T.Wood);
-  coinRow(l, 90, 12, 4);
-  fill(l, 96, 10, 4, 1, T.Wood);
-  coinRow(l, 96, 9, 3);
-  // hidden Mayan warp jar on the high bonus platform — skips ahead to the lagoon
-  ent(l, 'warpJar', 99, 9, '1-4 Azure Lagoon');
-  set(l, 98, 6, T.Question);
-  ent(l, 'macawWings', 98, 8);
+  // bonus area: wooden platforms with coins + warp jar to lagoon
+  fill(l, 138, 13, 4, 1, T.Wood);
+  coinRow(l, 138, 12, 4);
+  fill(l, 144, 10, 4, 1, T.Wood);
+  coinRow(l, 144, 9, 3);
+  ent(l, 'warpJar', 147, 9, '1-4 Azure Lagoon');
+  set(l, 146, 6, T.Question);
+  ent(l, 'macawWings', 146, 8);
 
-  // stairs up + gap
-  stairs(l, 106, GROUND_ROW - 1, 4, 1);
-  // gap 117-119 with cloud platform
-  fill(l, 117, 14, 3, 1, T.Cloud);
-  coinRow(l, 117, 13, 3);
+  // ----- upper route part 2: jungle highway (x 154-200) -----
+  stairs(l, 154, top - 1, 7, 1, T.Stone);
+  fill(l, 161, 10, 34, 1, T.Stone);
+  coinRow(l, 165, 9, 10);
+  ent(l, 'tortoiseGreen', 178, 9);
+  set(l, 188, 6, T.Question);
+  ent(l, 'goldenBanana', 195, 9); // reward for taking the high road
+  stairs(l, 195, top - 1, 7, -1, T.Stone);
 
-  // twin beetles + tortoise gauntlet
-  ent(l, 'beetle', 124, GROUND_ROW - 1);
-  ent(l, 'beetle', 127, GROUND_ROW - 1);
-  ent(l, 'tortoiseGreen', 133, GROUND_ROW - 2);
+  // main path gauntlet
+  ent(l, 'beetle', 134, top - 1);
+  ent(l, 'beetle', 138, top - 1);
+  ent(l, 'tortoiseGreen', 148, top - 2);
+  ent(l, 'coinCapuchin', 142, top - 2);
 
   // question row with vines decor
-  set(l, 138, 13, T.Question); set(l, 140, 13, T.Question); set(l, 142, 13, T.Question);
-  fill(l, 139, 8, 1, 5, T.Vine); fill(l, 143, 8, 1, 5, T.Vine);
+  set(l, 158, 13, T.Question); set(l, 160, 13, T.Question); set(l, 162, 13, T.Question);
+  fill(l, 159, 8, 1, 5, T.Vine); fill(l, 163, 8, 1, 5, T.Vine);
 
   // checkpoint
-  ent(l, 'checkpoint', 147, GROUND_ROW - 2);
+  ent(l, 'checkpoint', 175, top - 2);
 
-  // final stretch: log + flytrap, stairs to goal
-  fill(l, 154, GROUND_ROW - 2, 2, 2, T.LogBody);
-  set(l, 154, GROUND_ROW - 3, T.LogTop); set(l, 155, GROUND_ROW - 3, T.LogTop);
-  ent(l, 'flytrap', 155, GROUND_ROW - 3);
-  ent(l, 'beetle', 160, GROUND_ROW - 1);
-  set(l, 164, 13, T.Brick); set(l, 165, 13, T.Question); set(l, 166, 13, T.Brick);
-  stairs(l, 172, GROUND_ROW - 1, 5, 1);
-  // big gap then goal plateau
-  ground(l, 182, 18, 14);
-  coinRow(l, 184, 13, 3);
-  ent(l, 'goal', 190, 14 - 1);
+  // final stretch: log + flytrap, stairs to goal plateau
+  fill(l, 184, top - 2, 2, 2, T.LogBody);
+  set(l, 184, top - 3, T.LogTop); set(l, 185, top - 3, T.LogTop);
+  ent(l, 'flytrap', 185, top - 3);
+  ent(l, 'beetle', 192, top - 1);
+  set(l, 196, 13, T.Brick); set(l, 197, 13, T.Question); set(l, 198, 13, T.Brick);
+  stairs(l, 204, top - 1, 6, 1);
+
+  // goal plateau decorations
+  coinRow(l, 222, 13, 3);
+  ent(l, 'goal', 260, 14 - 1);
+  set(l, 240, 13, T.Foliage); set(l, 250, 13, T.Foliage);
+
   return l;
 }
 
