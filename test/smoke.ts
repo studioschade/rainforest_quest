@@ -247,6 +247,49 @@ for (const [item, key] of TIMED_CASES) {
   ok(shrunkH <= h0 * 0.55 && p.h >= h0 - 0.5, `shrinkberry: ${h0} -> ${shrunkH} -> ${p.h}`);
 }
 
+// Spirit Bloom stacks up to 3 times, each tier physically larger
+{
+  const { p } = cleanRoom();
+  const sizes: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    give('bloom');
+    sizes.push(p.h);
+  }
+  ok(p.sizeLevel === 3 && p.big, 'bloom stacks to sizeLevel 3');
+  ok(sizes[0] < sizes[1] && sizes[1] < sizes[2], `bloom sizes grow: ${sizes.join(' < ')}`);
+}
+
+// Shrinkberry stacks smaller each time
+{
+  const { p } = cleanRoom();
+  const sizes: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    give('shrinkberry');
+    sizes.push(p.h);
+  }
+  ok(p.shrinkLevel === 3, 'shrinkberry stacks to level 3');
+  ok(sizes[0] > sizes[1] && sizes[1] > sizes[2], `shrink sizes shrink: ${sizes.join(' > ')}`);
+}
+
+// Extra-big players smash breakable blocks by running into them
+{
+  // build a brick pillar to the right at head height
+  eng.startLevel(clone(BUILTIN_LEVELS[0]), { score: 0, coins: 0, lives: 3, levelName: '' });
+  (eng as any).ents = [];
+  const lvl = (eng as any).level;
+  const p2 = (eng as any).player;
+  for (let i = 0; i < 20; i++) eng.update(idle);
+  const tx = Math.floor(p2.x / 16), ty = Math.floor(p2.y / 16);
+  // pillar at chest/head height, one tile away so the resize doesn't overlap it
+  lvl.tiles[ty - 1][tx + 2] = TILE.Brick;
+  lvl.tiles[ty][tx + 2] = TILE.Brick;
+  p2.sizeLevel = 2; p2.big = true;
+  const runRight = { ...idle, right: true, run: true };
+  for (let i = 0; i < 30; i++) eng.update(runRight);
+  ok(lvl.tiles[ty - 1][tx + 2] === TILE.Empty && lvl.tiles[ty][tx + 2] === TILE.Empty,
+    'sizeLevel 2+ player smashes bricks by running into them');
+}
+
 // ember chili: form set, X fires, max 2, kills beetle, armadillo fireproof
 {
   const { p } = cleanRoom();

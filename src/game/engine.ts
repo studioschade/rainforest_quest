@@ -54,7 +54,9 @@ interface Particle {
 }
 
 interface Player extends Body {
-  big: boolean;
+  big: boolean; // derived: sizeLevel >= 1
+  sizeLevel: number; // 0=small, 1=big (Spirit Bloom), 2=bigger, 3=biggest
+  shrinkLevel: number; // 0=normal, 1..3 = stacked shrinkberry sizes
   facing: 1 | -1;
   coyote: number;
   buffer: number;
@@ -70,6 +72,18 @@ interface Player extends Body {
   cling: number; // tree frog wall cling direction (-1/1/0)
   swimming: boolean; // inside SwimWater
   swimCd: number; // frames until next stroke allowed
+}
+
+function playerBaseSize(sizeLevel: number): { w: number; h: number } {
+  // Spirit Bloom stacks up to 3 times, each tier larger physically.
+  if (sizeLevel >= 3) return { w: 24, h: 48 };
+  if (sizeLevel === 2) return { w: 19, h: 38 };
+  if (sizeLevel === 1) return { w: 14, h: 28 };
+  return { w: 12, h: 14 };
+}
+
+function shrinkScale(level: number): number {
+  return [1, 0.5, 0.35, 0.25][Math.max(0, Math.min(3, level))] ?? 0.5;
 }
 
 /** Active Static Starfruit chaos effect (surge OR scramble, never stacked). */
@@ -205,7 +219,8 @@ export class Engine {
 
     this.player = {
       x: spawn.x * TS + 2, y: spawn.y * TS, w: 12, h: 14, vx: 0, vy: 0,
-      big: false, facing: 1, onGround: false, coyote: 0, buffer: 0, airJumps: 0,
+      big: false, sizeLevel: 0, shrinkLevel: 0,
+      facing: 1, onGround: false, coyote: 0, buffer: 0, airJumps: 0,
       invuln: 0, dead: false, deadTimer: 0, anim: 0, wallSlide: 0,
       form: 'none', timers: { wings: 0, jaguar: 0, orchid: 0, legs: 0, shrink: 0, capuchin: 0 },
       pound: false, cling: 0, swimming: false, swimCd: 0,
@@ -422,13 +437,44 @@ export class Engine {
     }
   }
 
+  /** Break or pop a block from a side collision (extra-big player only). */
+  private breakBlockSide(tx: number, ty: number, fromDir: number): void {
+    if (!this.level || !this.player) return;
+    const t = tileAt(this.level, tx, ty);
+    if (t === TILE.Question) {
+      this.level.tiles[ty][tx] = TILE.QuestionUsed;
+      const content = questionContent(tx, ty, this.player.sizeLevel === 0);
+      const item = this.spawnItemFromBlock(content, tx, ty);
+      // eject sideways away from the player instead of upward
+      item.vx = fromDir * 1.5;
+      item.vy = -2;
+      this.addScore(200);
+    } else if (t === TILE.QuestionUsed) {
+      this.level.tiles[ty][tx] = TILE.Empty;
+      this.addScore(50);
+    } else if (t === TILE.Brick) {
+      this.level.tiles[ty][tx] = TILE.Empty;
+      for (let i = 0; i < 10; i++) {
+        this.particles.push({
+          x: tx * TS + 8, y: ty * TS + 8,
+          vx: (Math.random() - 0.5) * 5 - fromDir * 1.5, vy: -Math.random() * 5 - 1,
+          life: 40, maxLife: 40, color: i % 2 ? '#8a9a8b' : '#5f7060', size: 3, grav: 0.3,
+        });
+      }
+      this.addScore(50);
+    }
+    this.editorDirty = true;
+  }
+
   /** Spawn a powerup item rising out of a question block. */
-  private spawnItemFromBlock(kind: string, tx: number, ty: number): void {
-    this.ents.push({
+  private spawnItemFromBlock(kind: string, tx: number, ty: number): Ent {
+    const e: Ent = {
       kind, x: tx * TS + 2, y: ty * TS - 14, w: 12, h: 14, vx: 0, vy: -1.5,
       onGround: false, dir: 1, frame: 0, state: 'emerge', t: 0, dead: false, remove: false,
       hp: 1, baseY: ty * TS - 14, homeTx: tx, variant: '', target: '', extreme: false, stun: 0,
-    });
+    };
+    this.ents.push(e);
+    return e;
   }
 
   /** Apply a picked-up powerup to the player. */
@@ -437,17 +483,31 @@ export class Engine {
     if (!p) return;
     switch (kind) {
       case 'bloom':
-        if (!p.big) { p.big = true; this.sfx('grow'); } else this.sfx('powerup');
+        // Spirit Bloom stacks up to 3 times. Each step physically grows the player.
+        if (p.sizeLevel < 3) {
+          p.sizeLevel++;
+          p.big = true;
+          this.sfx(p.sizeLevel === 1 ? 'grow' : 'powerup');
+        } else {
+          this.sfx('powerup');
+          this.addScore(1000); // bonus for overfill at max size
+        }
         this.addScore(1000);
         break;
-      case 'emberChili': p.form = 'ember'; p.big = true; this.addScore(1000); this.sfx('powerup'); break;
-      case 'frogSuit': p.form = 'frog'; p.big = true; this.addScore(1000); this.sfx('powerup'); break;
-      case 'kapokAnvil': p.form = 'anvil'; p.big = true; this.addScore(1000); this.sfx('powerup'); break;
+      case 'emberChili': p.form = 'ember'; p.big = true; p.sizeLevel = Math.max(p.sizeLevel, 1); this.addScore(1000); this.sfx('powerup'); break;
+      case 'frogSuit': p.form = 'frog'; p.big = true; p.sizeLevel = Math.max(p.sizeLevel, 1); this.addScore(1000); this.sfx('powerup'); break;
+      case 'kapokAnvil': p.form = 'anvil'; p.big = true; p.sizeLevel = Math.max(p.sizeLevel, 1); this.addScore(1000); this.sfx('powerup'); break;
       case 'macawWings': p.timers.wings = TIMED_EFFECTS.wings.duration; this.addScore(800); this.sfx('powerup'); break;
       case 'jaguarPelt': p.timers.jaguar = TIMED_EFFECTS.jaguar.duration; this.addScore(800); this.sfx('powerup'); break;
       case 'rainbowOrchid': p.timers.orchid = TIMED_EFFECTS.orchid.duration; this.addScore(800); this.sfx('powerup'); break;
       case 'grasshopperLegs': p.timers.legs = TIMED_EFFECTS.legs.duration; this.addScore(800); this.sfx('powerup'); break;
-      case 'shrinkberry': p.timers.shrink = TIMED_EFFECTS.shrink.duration; this.addScore(800); this.sfx('shrink'); break;
+      case 'shrinkberry':
+        // Shrinkberry stacks: each extra berry makes you smaller and refreshes the timer.
+        if (p.shrinkLevel < 3) p.shrinkLevel++;
+        p.timers.shrink = TIMED_EFFECTS.shrink.duration;
+        this.addScore(800);
+        this.sfx('shrink');
+        break;
       case 'coinCapuchin': p.timers.capuchin = TIMED_EFFECTS.capuchin.duration; this.addScore(800); this.sfx('powerup'); break;
       case 'goldenBanana': this.addScore(500); this.effectGoldenBanana(); this.sfx('powerup'); break;
       case 'thunderMango': this.addScore(500); this.effectThunderMango(); this.sfx('powerup'); break;
@@ -883,16 +943,30 @@ export class Engine {
     if (p.vy > (p.pound ? 16 : 13)) p.vy = p.pound ? 16 : 13;
 
     // ---------- move player ----------
+    const base = playerBaseSize(p.sizeLevel);
     let scale = g.tinyPlayer ? 0.6 : g.giantPlayer ? 1.7 : 1;
-    if (p.timers.shrink > 0) scale *= 0.5;
-    const targetW = (p.big ? 14 : 12) * scale;
-    const targetH = (p.big ? 28 : 14) * scale;
+    if (p.timers.shrink > 0) scale *= shrinkScale(p.shrinkLevel);
+    const targetW = base.w * scale;
+    const targetH = base.h * scale;
     if (Math.abs(targetH - p.h) > 0.5) {
       const dh = targetH - p.h;
       p.h = targetH; p.w = targetW; p.y -= dh; // grow upward
     }
 
     const wallHit = this.moveX(p, p.vx, g.ghostWalk);
+    // extra-big players (sizeLevel >= 2) plow through breakable blocks by
+    // running into them from the side.
+    if (wallHit !== 0 && p.sizeLevel >= 2 && Math.abs(p.vx) > 0.8 && !g.ghostWalk) {
+      // After a wall hit the player's edge is resolved just shy of the tile
+      // boundary, so round toward the hit tile rather than the inner one.
+      const faceTx = wallHit < 0 ? Math.floor((p.x - 0.5) / TS) : Math.floor((p.x + p.w + 0.5) / TS);
+      for (let ty = Math.floor(p.y / TS); ty <= Math.floor((p.y + p.h - 1) / TS); ty++) {
+        const t = tileAt(this.level, faceTx, ty);
+        if (t === TILE.Brick || t === TILE.Question || t === TILE.QuestionUsed) {
+          this.breakBlockSide(faceTx, ty, wallHit);
+        }
+      }
+    }
     p.wallSlide = 0;
     if (wallHit !== 0 && !p.onGround) p.wallSlide = wallHit;
 
@@ -986,7 +1060,7 @@ export class Engine {
       if (p.timers[key] <= 0) continue;
       if (key === 'shrink' && p.timers.shrink <= 1) {
         // shrinkberry only expires when there's headroom to grow back
-        if (this.canGrow(p)) p.timers.shrink = 0;
+        if (this.canGrow(p)) { p.timers.shrink = 0; p.shrinkLevel = 0; }
       } else {
         p.timers[key]--;
       }
@@ -1074,9 +1148,10 @@ export class Engine {
   /** Is there headroom for the player to return to normal size (shrinkberry expiry)? */
   private canGrow(p: Player): boolean {
     const g = this.glitches;
+    const base = playerBaseSize(p.sizeLevel);
     const scale = g.tinyPlayer ? 0.6 : g.giantPlayer ? 1.7 : 1;
-    const targetH = (p.big ? 28 : 14) * scale;
-    const targetW = (p.big ? 14 : 12) * scale;
+    const targetH = base.h * scale;
+    const targetW = base.w * scale;
     if (targetH <= p.h + 0.5) return true;
     if (!this.level) return true;
     const newY = p.y + p.h - targetH;
@@ -1949,19 +2024,27 @@ export class Engine {
     if (p.invuln > 0 && !forceKill) return;
     if (!forceKill) {
       this.sfx('hurt');
-      // damage flow: FORM -> big (Spirit Bloom) -> small -> death
+      // damage flow: FORM -> lose form, keep (or gain) Spirit Bloom size ->
+      // each subsequent hit steps down one size level -> small -> death.
       if (p.form !== 'none') {
         p.form = 'none';
         p.pound = false;
-        p.big = true;
+        if (p.sizeLevel === 0) { p.sizeLevel = 1; p.big = true; }
         p.invuln = 130;
         return;
       }
-      if (p.big && !this.glitches.tinyPlayer) {
-        p.big = false;
+      if (p.sizeLevel > 0 && !this.glitches.tinyPlayer) {
+        const oldH = p.h;
+        p.sizeLevel--;
+        p.big = p.sizeLevel > 0;
+        const { w, h } = playerBaseSize(p.sizeLevel);
+        p.w = w; p.h = h;
+        // keep feet planted when shrinking
+        p.y += oldH - h;
+        // also clear any active shrinkberry because the hit already reset size
+        p.shrinkLevel = 0;
+        p.timers.shrink = 0;
         p.invuln = 130;
-        p.h = 14; p.w = 12;
-        p.y += 14;
         return;
       }
     }
@@ -2250,9 +2333,8 @@ export class Engine {
 
   private drawPlayer(c: CanvasRenderingContext2D, p: Player, camX: number, camY: number): void {
     const g = this.glitches;
-    let scale = g.tinyPlayer ? 0.6 : g.giantPlayer ? 1.7 : 1;
-    if (p.timers.shrink > 0) scale *= 0.5;
-    if (this.phase === 'warp' && this.warpAnim) scale *= Math.max(0.15, 1 - (this.warpAnim.t / 40) * 0.85);
+    // p.w already reflects sizeLevel, shrink stacks, and tiny/giant glitches,
+    // so derive the sprite scale from the actual hitbox vs the source sprite.
     let frame: 'idle' | 'run1' | 'run2' | 'jump' = 'idle';
     if (p.dead) frame = 'jump';
     else if (!p.onGround) frame = 'jump';
@@ -2260,6 +2342,8 @@ export class Engine {
     const spriteKey = p.form === 'ember' ? 'playerEmber' : p.form === 'frog' ? 'playerFrog' : p.form === 'anvil' ? 'playerAnvil'
       : `player${p.big ? 'Big' : 'Small'}`;
     const img = this.tex.get(`${spriteKey}:${frame}`);
+    let scale = p.w / img.width;
+    if (this.phase === 'warp' && this.warpAnim) scale *= Math.max(0.15, 1 - (this.warpAnim.t / 40) * 0.85);
     const dw = img.width * scale, dh = img.height * scale;
 
     const dx = p.x - camX + p.w / 2 - dw / 2;
