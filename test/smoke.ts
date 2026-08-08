@@ -553,6 +553,24 @@ console.log('Keys & locked goals:');
   ok(s.keys.includes('jade'), 'key is NOT consumed by the seal');
 }
 
+// ---------- 7b. goal celebration keeps gravity ----------
+console.log('Goal celebration gravity:');
+{
+  const { p } = cleanRoom();
+  const tx = Math.floor(p.x / 16), ty = Math.floor(p.y / 16);
+  (eng as any).spawnEntity({ type: 'goal', x: tx + 2, y: ty } as EntitySpawn);
+  const goal = (eng as any).ents.find((e: any) => e.kind === 'goal');
+  // touch the goal mid-jump: overlap it while airborne with upward velocity
+  p.x = goal.x; p.y = goal.y - 40; p.vy = -6; p.onGround = false;
+  let done = false;
+  for (let i = 0; i < 20 && !done; i++) { eng.update(idle); if ((eng as any).phase === 'complete') done = true; }
+  ok(done, 'airborne goal touch completes the level');
+  const yAtGoal = p.y;
+  for (let i = 0; i < 140; i++) eng.update(idle); // celebration walk
+  ok(p.y > yAtGoal + 20, 'player falls to the ground during the celebration (no float-off)');
+  ok(p.onGround, 'player is grounded by the end of the celebration');
+}
+
 // ---------- 8. EXTREME variants ----------
 console.log('EXTREME variants:');
 {

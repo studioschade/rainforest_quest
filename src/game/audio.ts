@@ -20,46 +20,153 @@ interface TrackDef {
   bpm: number; // quarter-note tempo; sequencer steps are 8th notes
   lead: (number | null)[]; // midi notes, one per 8th step (loop)
   bass: (number | null)[];
+  harmony?: (number | null)[]; // second, quieter square voice
   hatEvery?: number; // noise tick every N steps (0 = off)
 }
 
-// Step-sequencer loops — square lead, triangle bass, noise hats. Short & quiet.
+// Step-sequencer loops — square lead + harmony, triangle bass, noise hats.
+// Original compositions in a late-80s NES adventure vein: minor keys with
+// Phrygian / harmonic-minor color for the temple levels, brighter bounce for
+// the overworld and canopy. 32-step (4-bar) loops; the lagoon keeps its waltz.
 const TRACKS: Record<MusicTrack, TrackDef> = {
   title: {
-    bpm: 96,
-    lead: [72, 76, 79, 83, 84, 79, 76, 79, 72, null, 76, null, 79, 76, 74, null],
-    bass: [48, null, null, null, 43, null, null, null, 48, null, null, null, 43, null, 47, null],
+    // A minor, haunting call-and-answer with a harmonic-minor cadence
+    bpm: 100,
+    lead: [
+      69, null, 72, null, 76, null, 74, 72,
+      71, null, 68, null, 69, null, null, null,
+      65, null, 69, null, 72, null, 71, 69,
+      68, null, 64, 68, 69, null, null, null,
+    ],
+    bass: [
+      33, null, null, null, 33, null, null, null,
+      32, null, null, null, 33, null, null, null,
+      29, null, null, null, 29, null, null, null,
+      28, null, 32, null, 33, null, null, null,
+    ],
+    harmony: [
+      65, null, 69, null, 72, null, 71, 69,
+      68, null, 64, null, 65, null, null, null,
+      60, null, 65, null, 69, null, 68, 65,
+      64, null, 59, 64, 65, null, null, null,
+    ],
     hatEvery: 4,
   },
   overworld: {
-    bpm: 132,
-    lead: [72, 76, 79, 81, 79, 76, 74, 72, 76, 79, 81, 84, 81, 79, 76, 74],
-    bass: [48, null, 43, null, 48, null, 43, null, 48, null, 45, null, 41, null, 43, null],
+    // E minor march with a heroic turn — the explorer's theme
+    bpm: 126,
+    lead: [
+      64, null, 67, null, 71, null, 69, 67,
+      69, null, 67, null, 64, null, 62, 64,
+      66, null, 69, null, 74, null, 71, 69,
+      67, null, 66, 64, 62, null, null, null,
+    ],
+    bass: [
+      40, null, 47, null, 40, null, 47, null,
+      45, null, 52, null, 45, null, 52, null,
+      43, null, 50, null, 43, null, 50, null,
+      47, null, 47, null, 43, null, 47, null,
+    ],
+    harmony: [
+      60, null, 64, null, 67, null, 66, 64,
+      66, null, 64, null, 60, null, 59, 60,
+      62, null, 66, null, 71, null, 67, 66,
+      64, null, 64, 60, 59, null, null, null,
+    ],
     hatEvery: 2,
   },
   underworld: {
-    bpm: 84,
-    lead: [57, null, 60, null, 64, null, 60, 59, 57, null, 53, null, 55, null, 59, null],
-    bass: [45, null, null, 45, null, null, 41, null, 45, null, null, 45, 43, null, 47, null],
+    // Sunken Grotto: slow, sparse E Phrygian — semitone rub, deep pedal,
+    // long silences. The "ancient tomb" track.
+    bpm: 92,
+    lead: [
+      64, null, null, null, 65, null, 64, null,
+      62, null, null, null, 59, null, null, null,
+      60, null, 62, null, 64, null, 62, 60,
+      59, null, 56, null, 59, null, null, null,
+    ],
+    bass: [
+      40, null, null, null, null, null, null, null,
+      41, null, null, null, 40, null, null, null,
+      38, null, null, null, null, null, null, null,
+      35, null, null, null, 40, null, null, null,
+    ],
+    harmony: [
+      76, null, null, null, 77, null, 76, null,
+      null, null, null, null, 74, null, null, null,
+      72, null, null, null, 74, null, 72, 71,
+      71, null, 68, null, 71, null, null, null,
+    ],
     hatEvery: 4,
   },
   canopy: {
-    bpm: 112,
-    lead: [76, 80, 83, 88, 83, 80, 76, 73, 76, 80, 83, 80, 78, 80, 76, null],
-    bass: [52, null, 49, null, 45, null, 49, null, 52, null, 49, null, 47, null, 49, null],
+    // G major, light treetop bounce
+    bpm: 120,
+    lead: [
+      67, 71, 74, null, 72, 71, 69, 67,
+      69, null, 67, 69, 71, null, null, null,
+      74, null, 72, 74, 76, 74, 72, 71,
+      69, null, 67, 69, 67, null, null, null,
+    ],
+    bass: [
+      43, null, 50, null, 43, null, 50, null,
+      45, null, 52, null, 45, null, 52, null,
+      48, null, 55, null, 48, null, 55, null,
+      50, null, 47, null, 43, null, 50, null,
+    ],
+    harmony: [
+      64, 67, 71, null, 69, 67, 66, 64,
+      66, null, 64, 66, 67, null, null, null,
+      71, null, 69, 71, 72, 71, 69, 67,
+      66, null, 64, 66, 64, null, null, null,
+    ],
     hatEvery: 2,
   },
   lagoon: {
-    // waltz-ish 12-step (3/4 feel) arpeggio in F
+    // Waltz in F (3/4 feel, 6 steps per bar) — kept and extended with a
+    // chord-progression second half and a harmony line.
     bpm: 138,
-    lead: [65, 69, 72, 77, 72, 69, 65, 69, 72, 77, 81, 84],
-    bass: [41, null, null, 46, null, null, 48, null, null, 46, null, null],
+    lead: [
+      65, 69, 72, 77, 72, 69,
+      62, 65, 69, 74, 69, 65,
+      65, 69, 72, 77, 72, 69,
+      60, 65, 67, 72, 76, 79,
+    ],
+    bass: [
+      41, null, null, 48, null, null,
+      38, null, null, 45, null, null,
+      41, null, null, 48, null, null,
+      36, null, null, 43, null, null,
+    ],
+    harmony: [
+      69, 72, 76, 81, 76, 72,
+      65, 69, 72, 77, 72, 69,
+      69, 72, 76, 81, 76, 72,
+      64, 69, 72, 76, 81, 84,
+    ],
     hatEvery: 3,
   },
   boss: {
-    bpm: 152, // driving D minor
-    lead: [74, 74, 77, 74, 72, 74, 69, 67, 74, 74, 77, 79, 81, 77, 74, 72],
-    bass: [38, 38, null, 38, 38, null, 34, null, 38, 38, null, 38, 36, null, 38, null],
+    // Driving D minor with a rising chromatic bass — The Cursed Idol
+    bpm: 152,
+    lead: [
+      74, 74, null, 74, 77, null, 74, 72,
+      74, null, 81, null, 79, 77, 74, 72,
+      74, 74, null, 74, 77, null, 79, 81,
+      82, null, 81, 79, 77, null, 74, null,
+    ],
+    bass: [
+      38, 38, 38, null, 38, null, 38, null,
+      38, 38, 38, null, 39, null, 40, null,
+      38, 38, 38, null, 38, null, 38, null,
+      43, null, 41, null, 40, null, 39, null,
+    ],
+    harmony: [
+      67, 67, null, 67, 70, null, 67, 65,
+      67, null, 74, null, 72, 70, 67, 65,
+      67, 67, null, 67, 70, null, 72, 74,
+      75, null, 74, 72, 70, null, 67, null,
+    ],
     hatEvery: 2,
   },
 };
@@ -238,6 +345,8 @@ export class AudioEngine {
       const stepDur = 60 / def.bpm / 2;
       const lead = def.lead[i % def.lead.length];
       if (lead !== null) this.note('square', lead, stepDur * 0.9, 0.028);
+      const harmony = def.harmony?.[i % def.harmony.length];
+      if (harmony != null) this.note('square', harmony, stepDur * 0.9, 0.016);
       const bass = def.bass[i % def.bass.length];
       if (bass !== null) this.note('triangle', bass, stepDur * 0.95, 0.05);
       if (def.hatEvery && this.step % def.hatEvery === 1) this.noise(0.03, 0.012, 0, 2.2);

@@ -443,26 +443,27 @@ function beetleSprite(frame: number): HTMLCanvasElement {
   });
 }
 
-/** Shellback Tortoise walking (koopa analog). */
+/** Shellback Tortoise walking (koopa analog). Base faces LEFT — the engine
+ *  flips sprites when dir === 1, and tortoises spawn walking left. */
 function tortoiseSprite(color: 'green' | 'red', frame: number): HTMLCanvasElement {
   const shell = color === 'green' ? '#3f9e4d' : '#c94f43';
   const shellDk = color === 'green' ? '#2a7a36' : '#96352c';
   return mk(16, 24, (c) => {
-    // head
-    px(c, 10, 2, 5, 5, '#d8c76a');
-    px(c, 12, 3, 1, 1, PAL.eye);
-    px(c, 14, 4, 1, 2, '#b8a74a'); // beak
+    // head (left side — faces the direction of travel)
+    px(c, 1, 2, 5, 5, '#d8c76a');
+    px(c, 3, 3, 1, 1, PAL.eye);
+    px(c, 1, 4, 1, 2, '#b8a74a'); // beak
     // body shell
-    px(c, 2, 8, 11, 9, shell);
-    px(c, 2, 8, 11, 2, shellDk);
-    px(c, 4, 10, 7, 5, shellDk === '#2a7a36' ? '#54b565' : '#e0695d');
-    px(c, 2, 15, 11, 2, shellDk);
+    px(c, 3, 8, 11, 9, shell);
+    px(c, 3, 8, 11, 2, shellDk);
+    px(c, 5, 10, 7, 5, shellDk === '#2a7a36' ? '#54b565' : '#e0695d');
+    px(c, 3, 15, 11, 2, shellDk);
     // belly
-    px(c, 11, 9, 2, 7, '#e8dd9a');
+    px(c, 3, 9, 2, 7, '#e8dd9a');
     // legs
-    if (frame === 0) { px(c, 4, 17, 3, 4, '#d8c76a'); px(c, 10, 17, 3, 4, '#d8c76a'); }
-    else { px(c, 3, 17, 3, 4, '#d8c76a'); px(c, 11, 17, 3, 4, '#d8c76a'); }
-    px(c, 4, 21, 3, 2, PAL.boot); px(c, 10, 21, 3, 2, PAL.boot);
+    if (frame === 0) { px(c, 3, 17, 3, 4, '#d8c76a'); px(c, 9, 17, 3, 4, '#d8c76a'); }
+    else { px(c, 2, 17, 3, 4, '#d8c76a'); px(c, 10, 17, 3, 4, '#d8c76a'); }
+    px(c, 3, 21, 3, 2, PAL.boot); px(c, 9, 21, 3, 2, PAL.boot);
   });
 }
 

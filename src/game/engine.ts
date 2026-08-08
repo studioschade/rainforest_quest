@@ -704,10 +704,16 @@ export class Engine {
     }
 
     if (this.phase === 'complete') {
-      // celebration: auto-walk right
+      // celebration: auto-walk right. Gravity still applies — touching the
+      // goal mid-jump used to leave the player floating right at a fixed
+      // height; now they land and walk off on the ground.
       this.phaseTimer++;
       p.vx = 1.2;
       this.moveX(p, p.vx, false);
+      p.vy += phys.gravity * (p.vy > 0 ? GRAV_FALL_MULT : 1);
+      if (p.vy > 13) p.vy = 13;
+      if (this.moveY(p, p.vy, false, true, p.y + p.h) === 1) { p.vy = 0; p.onGround = true; }
+      else p.onGround = false;
       p.anim++;
       if (Math.random() < 0.1) {
         this.particles.push({
