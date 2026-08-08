@@ -157,104 +157,127 @@ function build11(): LevelData {
 }
 
 // ======================================================================
-// 1-2 Sunken Grotto (underworld) — lava, piranhas, armadillos, bridges
+// 1-2 Sunken Grotto (underworld) — wider cave with upper/lower routes
+// and vertical lava shafts. Width 210.
 // ======================================================================
 function build12(): LevelData {
-  const l = blank('1-2 Sunken Grotto', 'underworld', 160);
+  const l = blank('1-2 Sunken Grotto', 'underworld', 210);
   const top = 18;
   const st = (x: number, w: number, t = top) => ground(l, x, w, t, T.Stone, T.Temple);
 
-  st(0, 24);
-  st(28, 14);
-  st(46, 18);
-  st(68, 10);
-  st(82, 20);
-  st(106, 14);
-  st(124, 36);
+  // main path ground segments with pits for lava/water/jumps
+  st(0, 28);
+  st(33, 16);
+  st(53, 20);
+  st(77, 12);
+  st(93, 26);
+  st(123, 26);
+  st(153, 20);
+  st(183, 27, 14); // goal plateau, lower top row
 
   ent(l, 'playerStart', 2, top - 2);
 
   // ceiling for cavern feel (sparse)
   fill(l, 0, 0, l.width, 2, T.Stone);
-  for (let x = 10; x < l.width - 10; x += 17) fill(l, x, 2, 4, 1, T.Stone);
+  for (let x = 10; x < l.width - 10; x += 19) fill(l, x, 2, 4, 1, T.Stone);
 
-  // lava pool 24-27 with crumbling bridge
-  fill(l, 24, top + 2, 4, H - top - 2, T.Lava);
-  fill(l, 24, top - 1, 4, 1, T.Bridge);
-  ent(l, 'armadillo', 30, top - 1);
+  // ---- opening: lava pool 28-32 with crumbling bridge ----
+  fill(l, 28, top + 2, 5, H - top - 2, T.Lava);
+  fill(l, 28, top - 1, 5, 1, T.Bridge);
+  ent(l, 'armadillo', 34, top - 1);
 
-  // question blocks
-  set(l, 33, 13, T.Question); set(l, 35, 13, T.Brick); set(l, 37, 13, T.Question);
-  ent(l, 'frogSuit', 34, top - 2);
+  // question blocks + frog suit
+  set(l, 37, 13, T.Question); set(l, 39, 13, T.Brick); set(l, 41, 13, T.Question);
+  ent(l, 'frogSuit', 38, top - 2);
 
-  // water pool 42-45 with leaping piranhas
-  fill(l, 42, top, 4, H - top, T.Water);
-  ent(l, 'piranha', 43, top + 2);
-  // wooden platform across
-  fill(l, 42, 13, 4, 1, T.Wood);
-  coinRow(l, 42, 12, 4);
+  // ---- water pool 48-52 with piranha ----
+  fill(l, 48, top, 5, H - top, T.Water);
+  ent(l, 'piranha', 50, top + 2);
+  fill(l, 48, 13, 5, 1, T.Wood);
+  coinRow(l, 48, 12, 5);
 
-  // beetle cave patrol
-  ent(l, 'beetle', 50, top - 1);
-  ent(l, 'armadillo', 56, top - 1);
-  set(l, 52, 13, T.Brick); set(l, 53, 13, T.Question); set(l, 54, 13, T.Brick);
+  // ---- vertical shaft / upper route (x 55-75) ----
+  // climb the left wall to a high stone road, then drop back down
+  stairs(l, 55, top - 1, 6, 1, T.Stone); // up to row 13
+  fill(l, 61, 13, 1, 1, T.Stone);
+  fill(l, 62, 10, 12, 1, T.Stone);       // high road row 10
+  coinRow(l, 64, 9, 6);
+  set(l, 72, 7, T.Question);
+  ent(l, 'tortoiseTan', 68, 9);          // Tan Koopa guards the high road
+  stairs(l, 74, top - 1, 6, -1, T.Stone); // descend back to main path
 
-  // lava pit 64-67, jump across via stone pillar
-  fill(l, 64, top + 1, 4, H - top - 1, T.Lava);
-  fill(l, 65, top - 2, 2, 2, T.Stone);
+  // ---- main path lava pit 72-76, jump across via pillar ----
+  fill(l, 72, top + 1, 5, H - top - 1, T.Lava);
+  fill(l, 73, top - 2, 2, 2, T.Stone);
 
-  // spikes section
-  fill(l, 70, top - 1, 4, 1, T.Spikes);
-  fill(l, 70, 13, 4, 1, T.Wood);
-  coinRow(l, 70, 12, 4);
+  // ---- lower shortcut: crumbling bridge under the spikes/lava lake (x 78-92) ----
+  fill(l, 78, top + 3, 15, 1, T.Bridge);
+  ent(l, 'beetle', 82, top + 2);
+  coinRow(l, 84, top + 1, 6);
 
-  ent(l, 'checkpoint', 78, top - 2);
+  // ---- spikes section (x 77-88 main path) ----
+  fill(l, 78, top - 1, 6, 1, T.Spikes);
+  fill(l, 78, 13, 6, 1, T.Wood);
+  coinRow(l, 78, 12, 6);
 
-  // second water crossing, two piranhas
-  fill(l, 78, top, 4, H - top, T.Empty); // restore gap region handled above; carve real water pool:
-  st(78, 4); // small island before the pool
-  fill(l, 102, top, 4, H - top, T.Water);
-  ent(l, 'piranha', 103, top + 2);
-  ent(l, 'piranha', 104, top + 3);
-  fill(l, 102, 12, 4, 1, T.Wood);
+  ent(l, 'checkpoint', 87, top - 2);
 
-  // long lava lake 84-101 with bridge segments and gaps
-  fill(l, 84, top + 2, 18, H - top - 2, T.Lava);
-  fill(l, 84, top - 1, 6, 1, T.Bridge);
-  fill(l, 92, top - 1, 4, 1, T.Bridge);
-  fill(l, 98, top - 1, 4, 1, T.Bridge);
-  fill(l, 90, top - 1, 2, 1, T.Stone);
-  fill(l, 96, top - 1, 2, 1, T.Stone);
-  ent(l, 'armadillo', 86, top - 2);
+  // ---- second water crossing (x 94-98) ----
+  // starts at 94 so x=93 (solid ground from st(93,26)) acts as the left wall
+  fill(l, 94, top, 5, H - top, T.Water);
+  ent(l, 'piranha', 95, top + 2);
+  ent(l, 'piranha', 97, top + 3);
+  fill(l, 94, 12, 5, 1, T.Wood);
 
-  // grotto treasures
-  set(l, 108, 13, T.Question); set(l, 110, 13, T.Question); set(l, 112, 13, T.Brick);
-  fill(l, 109, 9, 3, 1, T.Wood); coinRow(l, 109, 8, 3);
-  ent(l, 'shrinkberry', 108, top - 2);
-  ent(l, 'thunderMango', 130, top - 2);
+  // ---- long lava lake 98-122 with bridges + upper route ----
+  fill(l, 98, top + 2, 25, H - top - 2, T.Lava);
+  fill(l, 98, top - 1, 7, 1, T.Bridge);
+  fill(l, 108, top - 1, 5, 1, T.Bridge);
+  fill(l, 118, top - 1, 5, 1, T.Bridge);
+  fill(l, 105, top - 1, 2, 1, T.Stone);
+  fill(l, 113, top - 1, 2, 1, T.Stone);
+  ent(l, 'armadillo', 100, top - 2);
 
-  // tight jumps on stone pillars
-  fill(l, 120, top - 2, 2, 2, T.Stone);
-  fill(l, 122, top - 3, 2, 3, T.Stone);
-  // (124+ is solid ground already)
-  ent(l, 'beetle', 128, top - 1);
-  ent(l, 'tortoiseRed', 134, top - 2);
+  // high road over the lava lake
+  fill(l, 102, 9, 18, 1, T.Stone);
+  coinRow(l, 106, 8, 8);
+  ent(l, 'tortoiseRed', 114, 8);
+  set(l, 116, 6, T.Question);
 
-  // final gauntlet: spikes + flytrap log
-  fill(l, 138, top - 1, 3, 1, T.Spikes);
-  fill(l, 137, 13, 5, 1, T.Wood);
-  fill(l, 144, top - 2, 2, 2, T.LogBody);
-  set(l, 144, top - 3, T.LogTop); set(l, 145, top - 3, T.LogTop);
-  ent(l, 'flytrap', 144, top - 3);
+  // ---- grotto treasures ----
+  set(l, 128, 13, T.Question); set(l, 130, 13, T.Question); set(l, 132, 13, T.Brick);
+  fill(l, 129, 9, 3, 1, T.Wood); coinRow(l, 129, 8, 3);
+  ent(l, 'shrinkberry', 128, top - 2);
+  ent(l, 'thunderMango', 140, top - 2);
 
-  // tucked-away warp jar after the spikes — foliage + coins hint at the secret
-  set(l, 141, top - 1, T.Foliage);
-  ent(l, 'warpJar', 142, top - 1, '1-3 Canopy Heights');
-  coinRow(l, 141, 15, 3);
+  // ---- vertical descent shaft (x 145-155) ----
+  fill(l, 147, 8, 6, 1, T.Stone);
+  fill(l, 147, 9, 1, 6, T.Stone);
+  fill(l, 152, 9, 1, 6, T.Stone);
+  coinRow(l, 148, 11, 4);
+  ent(l, 'beetle', 149, 7);
 
-  stairs(l, 148, top - 1, 4, 1, T.Temple);
-  ground(l, 152, 8, 15, T.Stone, T.Temple);
-  ent(l, 'goal', 155, 14);
+  // ---- tight jumps on stone pillars ----
+  fill(l, 158, top - 2, 2, 2, T.Stone);
+  fill(l, 160, top - 3, 2, 3, T.Stone);
+  fill(l, 162, top - 4, 2, 4, T.Stone);
+  ent(l, 'beetle', 166, top - 1);
+  ent(l, 'tortoiseRed', 171, top - 2);
+
+  // ---- final gauntlet: spikes + flytrap log ----
+  fill(l, 176, top - 1, 4, 1, T.Spikes);
+  fill(l, 175, 13, 5, 1, T.Wood);
+  fill(l, 182, top - 2, 2, 2, T.LogBody);
+  set(l, 182, top - 3, T.LogTop); set(l, 183, top - 3, T.LogTop);
+  ent(l, 'flytrap', 182, top - 3);
+
+  // tucked-away warp jar after the spikes
+  set(l, 179, top - 1, T.Foliage);
+  ent(l, 'warpJar', 180, top - 1, '1-3 Canopy Heights');
+  coinRow(l, 179, 15, 3);
+
+  stairs(l, 188, top - 1, 4, 1, T.Temple);
+  ent(l, 'goal', 195, 14);
   return l;
 }
 
