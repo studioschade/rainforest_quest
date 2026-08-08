@@ -20,6 +20,20 @@ Play as a jungle explorer across the five-level **Rainforest Saga**:
 
 Faithful SMB1 physics: acceleration/friction, variable jump height, coyote time, jump buffering, stomp bounces, question blocks, breakable bricks, checkpoints, and 100-coins-for-a-1UP.
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="./assets/readme/title.png" width="80%" alt="Rainforest Quest title screen">
+  <br>
+  <em>Title screen</em>
+</p>
+
+<p align="center">
+  <img src="./assets/readme/gameplay.png" width="80%" alt="Rainforest Quest gameplay — Emerald Floor">
+  <br>
+  <em>Gameplay on 1-1 Emerald Floor</em>
+</p>
+
 ## 👾 Enemies
 
 The SMB1 roster, rainforest-reskinned — Mossback Beetles (Goombas), Shellback Tortoises with full shell-kick mechanics (Koopas), Snapjaw Flytraps (Piranha Plants), Coconut Monkeys (Hammer Bros), a Harpy Eagle dropping Spiky Durians (Lakitu + Spinies), bump-proof Armadillos (Buzzy Beetles), and Leaping Piranhas (Cheep Cheeps).
