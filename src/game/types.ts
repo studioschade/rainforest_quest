@@ -1,4 +1,4 @@
-// Rainforest Quest — shared type definitions
+// Super Glitch World — shared type definitions
 // (No TS enums: project builds with erasableSyntaxOnly, so we use const objects + union types.)
 
 export const TILE = {
@@ -52,6 +52,7 @@ export type EntityType =
   | 'beetle' // Mossback Beetle (goomba)
   | 'tortoiseGreen' // Shellback Tortoise (koopa, walks off ledges)
   | 'tortoiseRed' // turns at ledges
+  | 'tortoiseTan' // charges when player is near, jumps in extreme mode
   | 'flytrap' // Snapjaw Flytrap (piranha plant, sits on a log)
   | 'monkey' // Coconut Monkey (hammer bro)
   | 'eagle' // Harpy Eagle (lakitu)
@@ -148,6 +149,8 @@ export interface LevelData {
   tiles: number[][]; // [row][col], row 0 = top
   entities: EntitySpawn[];
   builtin?: boolean;
+  /** Optional map "tx,ty" -> entity kind for fixed ? Block contents. */
+  questionContents?: Record<string, string>;
 }
 
 export interface WorldData {

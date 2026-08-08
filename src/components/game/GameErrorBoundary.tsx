@@ -22,7 +22,7 @@ export class GameErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('[Rainforest Quest] render error:', error, info.componentStack);
+    console.error('[Super Glitch World] render error:', error, info.componentStack);
   }
 
   private reloadToTitle = (): void => {

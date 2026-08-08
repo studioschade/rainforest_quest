@@ -1,6 +1,6 @@
-# 🌿 Rainforest Quest
+# ⚡🌿 Super Glitch World
 
-A Super Mario Bros.-style platformer reimagined deep in the rainforest — with a glitch-physics playground, a full level editor, warp jars, colored keys, and procedurally generated everything: pixel-art textures, chiptune music, and sound effects. No external assets, no image files, no audio files — it's all code.
+A Super Mario Bros.-style platformer set in a glitched-out Aztec rainforest — with a glitch-physics playground, a full level editor, warp jars, colored keys, and procedurally generated everything: pixel-art textures, chiptune music, and sound effects. No external assets, no image files, no audio files — it's all code.
 
 Built with **React + TypeScript + Vite + Tailwind CSS**, rendered on HTML5 Canvas.
 
@@ -8,7 +8,7 @@ Built with **React + TypeScript + Vite + Tailwind CSS**, rendered on HTML5 Canva
 
 ## 🎮 The Game
 
-Play as a jungle explorer across the five-level **Rainforest Saga**:
+Play as a jungle explorer across the five-level **Super Glitch Saga**:
 
 | # | Level | Theme |
 |---|-------|-------|
@@ -23,13 +23,13 @@ Faithful SMB1 physics: acceleration/friction, variable jump height, coyote time,
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="./assets/readme/title.png" width="80%" alt="Rainforest Quest title screen">
+  <img src="./assets/readme/title.png" width="80%" alt="Super Glitch World title screen">
   <br>
   <em>Title screen</em>
 </p>
 
 <p align="center">
-  <img src="./assets/readme/gameplay.png" width="80%" alt="Rainforest Quest gameplay — Emerald Floor">
+  <img src="./assets/readme/gameplay.png" width="80%" alt="Super Glitch World gameplay — Emerald Floor">
   <br>
   <em>Gameplay on 1-1 Emerald Floor</em>
 </p>

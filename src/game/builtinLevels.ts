@@ -478,6 +478,6 @@ function build14(): LevelData {
 export const BUILTIN_LEVELS: LevelData[] = [build11(), build12(), build13(), buildLagoon(), build14()];
 
 export const BUILTIN_WORLD: { name: string; levels: LevelData[] } = {
-  name: 'The Rainforest Saga',
+  name: 'Super Glitch Saga',
   levels: BUILTIN_LEVELS,
 };

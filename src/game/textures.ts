@@ -498,10 +498,32 @@ function tortoiseSprite(color: 'green' | 'red', frame: number): HTMLCanvasElemen
   });
 }
 
+/** Tan Koopa — charges when the player is near, jumps in EXTREME mode. */
+function tortoiseTanSprite(frame: number): HTMLCanvasElement {
+  const shell = '#c9a13b', shellDk = '#8f701f';
+  return mk(16, 24, (c) => {
+    // head
+    px(c, 1, 2, 5, 5, '#e8c970');
+    px(c, 3, 3, 1, 1, PAL.eye);
+    px(c, 1, 4, 1, 2, '#c9a13b'); // beak
+    // shell
+    px(c, 3, 8, 11, 9, shell);
+    px(c, 3, 8, 11, 2, shellDk);
+    px(c, 5, 10, 7, 5, '#e0b854');
+    px(c, 3, 15, 11, 2, shellDk);
+    // belly
+    px(c, 3, 9, 2, 7, '#f5e7a8');
+    // legs
+    if (frame === 0) { px(c, 3, 17, 3, 4, '#e8c970'); px(c, 9, 17, 3, 4, '#e8c970'); }
+    else { px(c, 2, 17, 3, 4, '#e8c970'); px(c, 10, 17, 3, 4, '#e8c970'); }
+    px(c, 3, 21, 3, 2, '#8f5a1f'); px(c, 9, 21, 3, 2, '#8f5a1f');
+  });
+}
+
 /** Shell (tortoise / armadillo). */
-function shellSprite(kind: 'green' | 'red' | 'armadillo'): HTMLCanvasElement {
-  const main = kind === 'green' ? '#3f9e4d' : kind === 'red' ? '#c94f43' : '#8a8f96';
-  const dk = kind === 'green' ? '#2a7a36' : kind === 'red' ? '#96352c' : '#5d626a';
+function shellSprite(kind: 'green' | 'red' | 'tan' | 'armadillo'): HTMLCanvasElement {
+  const main = kind === 'green' ? '#3f9e4d' : kind === 'red' ? '#c94f43' : kind === 'tan' ? '#c9a13b' : '#8a8f96';
+  const dk = kind === 'green' ? '#2a7a36' : kind === 'red' ? '#96352c' : kind === 'tan' ? '#8f701f' : '#5d626a';
   return mk(16, 16, (c) => {
     px(c, 1, 5, 14, 9, main);
     px(c, 3, 2, 10, 4, main);
@@ -1567,6 +1589,7 @@ export function generateTextures(): TexAtlas {
     put(`beetle:${f}`, beetleSprite(f));
     put(`tortoiseGreen:${f}`, tortoiseSprite('green', f));
     put(`tortoiseRed:${f}`, tortoiseSprite('red', f));
+    put(`tortoiseTan:${f}`, tortoiseTanSprite(f));
     put(`flytrap:${f}`, flytrapSprite(f));
     put(`monkey:${f}`, monkeySprite(f));
     put(`eagle:${f}`, eagleSprite(f));
@@ -1577,6 +1600,7 @@ export function generateTextures(): TexAtlas {
   }
   put('shell:green', shellSprite('green'));
   put('shell:red', shellSprite('red'));
+  put('shell:tan', shellSprite('tan'));
   put('shell:armadillo', shellSprite('armadillo'));
   put('coconut', coconutSprite());
   put('durian', durianSprite());

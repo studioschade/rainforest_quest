@@ -34,6 +34,7 @@ const ENEMY_ITEMS: { name: string; entity: string }[] = [
   { name: 'Mossback Beetle', entity: 'beetle' },
   { name: 'Tortoise (G)', entity: 'tortoiseGreen' },
   { name: 'Tortoise (R)', entity: 'tortoiseRed' },
+  { name: 'Tan Koopa', entity: 'tortoiseTan' },
   { name: 'Snapjaw Flytrap', entity: 'flytrap' },
   { name: 'Coconut Monkey', entity: 'monkey' },
   { name: 'Harpy Eagle', entity: 'eagle' },
@@ -76,6 +77,31 @@ const SPECIAL_ITEMS: { name: string; entity: string }[] = [
   { name: 'Warp Jar', entity: 'warpJar' },
   { name: 'Player Start', entity: 'playerStart' },
 ];
+
+/** Items that can be placed inside a ? Block as fixed loot. */
+const QUESTION_LOOT_ITEMS: { name: string; entity: string }[] = [
+  { name: '🎲 Random', entity: '' },
+  { name: '💰 Coin', entity: 'coin' },
+  { name: '🍄 Spirit Bloom', entity: 'bloom' },
+  { name: '🔥 Ember Chili', entity: 'emberChili' },
+  { name: '🐸 Tree Frog Suit', entity: 'frogSuit' },
+  { name: '🪨 Kapok Anvil', entity: 'kapokAnvil' },
+  { name: '🪶 Macaw Wings', entity: 'macawWings' },
+  { name: '🐆 Jaguar Pelt', entity: 'jaguarPelt' },
+  { name: '🌈 Rainbow Orchid', entity: 'rainbowOrchid' },
+  { name: '🦗 Grasshopper Legs', entity: 'grasshopperLegs' },
+  { name: '🫐 Shrinkberry', entity: 'shrinkberry' },
+  { name: '🐒 Coin Capuchin', entity: 'coinCapuchin' },
+  { name: '🍌 Golden Banana', entity: 'goldenBanana' },
+  { name: '🥭 Thunder Mango', entity: 'thunderMango' },
+  { name: '⭐ Static Starfruit', entity: 'staticStarfruit' },
+  { name: '🔑 Jade Key', entity: 'keyJade' },
+  { name: '🔑 Gold Key', entity: 'keyGold' },
+  { name: '🔑 Obsidian Key', entity: 'keyObsidian' },
+  { name: '🚩 Checkpoint', entity: 'checkpoint' },
+];
+
+const QUESTION_CONTENT_SET = new Set(QUESTION_LOOT_ITEMS.map((i) => i.entity).filter(Boolean));
 
 export function EditorPanel() {
   const ctl = useRQ();
@@ -163,6 +189,24 @@ export function EditorPanel() {
           </div>
           <div className="truncate">sel: <span className="text-amber-300">{selLabel}</span></div>
         </div>
+        {eng.editorSel.kind === 'tile' && eng.editorSel.tile === TILE.Question && (
+          <div className="border-t border-emerald-800 pt-2">
+            <label className="block text-xs text-fuchsia-300 font-bold mb-1">? Block loot</label>
+            <select
+              className="jungle-input text-xs w-full"
+              value={eng.editorQuestionContent}
+              onChange={(e) => { eng.editorQuestionContent = e.target.value; ctl.bump(); }}
+            >
+              {QUESTION_LOOT_ITEMS.map((i) => <option key={i.entity} value={i.entity}>{i.name}</option>)}
+            </select>
+            <p className="text-[10px] text-emerald-200/50 mt-1">Pick “Random” for normal surprise blocks, or choose a fixed item/key/coin.</p>
+          </div>
+        )}
+        {eng.editorSel.kind === 'entity' && QUESTION_CONTENT_SET.has(eng.editorSel.entity) && (
+          <div className="border-t border-emerald-800 pt-2 text-xs text-amber-200">
+            <span className="font-bold">Tip:</span> Click a ? Block with this item selected to put it inside.
+          </div>
+        )}
         {eng.editorSel.kind === 'entity' && eng.editorSel.entity === 'warpJar' && (
           <div className="border-t border-emerald-800 pt-2">
             <label className="block text-xs text-fuchsia-300 font-bold mb-1">Warp Jar target</label>

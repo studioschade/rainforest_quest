@@ -1,4 +1,4 @@
-// Rainforest Quest engine — fixed-timestep platformer core rendering to canvas.
+// Super Glitch World engine — fixed-timestep platformer core rendering to canvas.
 import { TILE, SOLID_TILES, ONEWAY_TILES, tileAt, TIMED_EFFECTS, KEY_INFO } from './types';
 import type { LevelData, EntitySpawn, FormType, TimedKey, KeyColor } from './types';
 import type { TexAtlas } from './textures';
@@ -127,10 +127,20 @@ const POWERUP_KINDS = new Set([...WALKER_ITEMS, ...FLOATER_ITEMS, 'goldenBanana'
 const INSTANT_KILLABLE = new Set(['beetle', 'tortoise', 'armadillo', 'durian', 'durianDrop', 'monkey', 'eagle', 'flytrap', 'piranha', 'shell', 'swimfish', 'jaguarWarrior', 'serpent', 'sentinel']);
 /** Colored key pickups. */
 const KEY_KINDS = new Set(['keyJade', 'keyGold', 'keyObsidian']);
+
+/** Entity kinds that can be placed inside a ? Block as fixed loot. */
+const QUESTION_CONTENTS = new Set([
+  'bloom', 'emberChili', 'frogSuit', 'kapokAnvil', 'macawWings', 'jaguarPelt',
+  'rainbowOrchid', 'grasshopperLegs', 'shrinkberry', 'coinCapuchin',
+  'goldenBanana', 'thunderMango', 'staticStarfruit', 'coin',
+  'keyJade', 'keyGold', 'keyObsidian', 'checkpoint',
+]);
+
+function questionKey(tx: number, ty: number): string { return `${tx},${ty}`; }
 /** Stompable enemy kinds — EXTREME variants of these get +1 stomp HP. */
 const STOMPABLE_KINDS = new Set(['beetle', 'tortoise', 'armadillo', 'monkey', 'eagle', 'swimfish', 'jaguarWarrior', 'serpent', 'sentinel']);
 /** Editor entity brushes that accept the EXTREME checkbox (uses spawn types). */
-const ENEMY_BRUSHES = new Set(['beetle', 'tortoiseGreen', 'tortoiseRed', 'flytrap', 'monkey', 'eagle', 'durian', 'armadillo', 'piranha', 'swimfish', 'jaguarWarrior', 'serpent', 'sentinel', 'boss']);
+const ENEMY_BRUSHES = new Set(['beetle', 'tortoiseGreen', 'tortoiseRed', 'tortoiseTan', 'flytrap', 'monkey', 'eagle', 'durian', 'armadillo', 'piranha', 'swimfish', 'jaguarWarrior', 'serpent', 'sentinel', 'boss']);
 
 export type EditorSel =
   | { kind: 'tile'; tile: number }
@@ -172,6 +182,7 @@ export class Engine {
   editorWarpTarget = ''; // destination chosen in the editor for the next placed jar
   editorGoalLock: '' | KeyColor = ''; // seal color chosen in the editor for the next placed goal
   editorExtreme = false; // EXTREME flag for the next placed enemy
+  editorQuestionContent = ''; // '' = random, otherwise fixed ? Block loot (e.g. 'bloom')
 
   // callbacks wired by the controller
   onStats: () => void = () => {};
@@ -265,6 +276,7 @@ export class Engine {
       case 'beetle': mk('beetle', ex + 2, ey + 3, 12, 13); break;
       case 'tortoiseGreen': mk('tortoise', ex + 1, ey - 8, 14, 22, { variant: 'green' }); break;
       case 'tortoiseRed': mk('tortoise', ex + 1, ey - 8, 14, 22, { variant: 'red' }); break;
+      case 'tortoiseTan': mk('tortoiseTan', ex + 1, ey - 8, 14, 22); break;
       case 'armadillo': mk('armadillo', ex + 1, ey + 3, 14, 13); break;
       case 'durian': mk('durian', ex + 1, ey + 2, 14, 14); break;
       case 'flytrap': mk('flytrap', ex + 2, ey + 4, 12, 20, { state: 'hidden' }); break;
@@ -399,9 +411,23 @@ export class Engine {
     if (t === TILE.Question) {
       this.level.tiles[ty][tx] = TILE.QuestionUsed;
       this.bumpAnims.push({ tx, ty, t: 0 });
-      const content = questionContent(tx, ty, !this.player.big);
+      // fixed editor-defined loot takes priority; otherwise random by position
+      const fixed = this.level.questionContents?.[questionKey(tx, ty)];
+      const content = fixed ?? questionContent(tx, ty, !this.player.big);
       if (content === 'coin') {
         this.addCoin(tx * TS + 8, ty * TS - 10);
+      } else if (content === 'checkpoint') {
+        this.ents.push({
+          kind: 'checkpoint', x: tx * TS + 2, y: ty * TS - 14, w: 12, h: 14, vx: 0, vy: -1.5,
+          onGround: false, dir: 1, frame: 0, state: 'emerge', t: 0, dead: false, remove: false,
+          hp: 1, baseY: ty * TS - 14, homeTx: tx, variant: '', target: '', extreme: false, stun: 0,
+        });
+      } else if (KEY_KINDS.has(content)) {
+        this.ents.push({
+          kind: content, x: tx * TS + 2, y: ty * TS - 14, w: 12, h: 14, vx: 0, vy: -1.5,
+          onGround: false, dir: 1, frame: 0, state: 'emerge', t: 0, dead: false, remove: false,
+          hp: 1, baseY: ty * TS - 14, homeTx: tx, variant: '', target: '', extreme: false, stun: 0,
+        });
       } else {
         this.spawnItemFromBlock(content, tx, ty);
       }
@@ -443,11 +469,22 @@ export class Engine {
     const t = tileAt(this.level, tx, ty);
     if (t === TILE.Question) {
       this.level.tiles[ty][tx] = TILE.QuestionUsed;
-      const content = questionContent(tx, ty, this.player.sizeLevel === 0);
-      const item = this.spawnItemFromBlock(content, tx, ty);
-      // eject sideways away from the player instead of upward
-      item.vx = fromDir * 1.5;
-      item.vy = -2;
+      const fixed = this.level.questionContents?.[questionKey(tx, ty)];
+      const content = fixed ?? questionContent(tx, ty, this.player.sizeLevel === 0);
+      if (content === 'coin') {
+        this.addCoin(tx * TS + 8, ty * TS - 10);
+      } else if (content === 'checkpoint' || KEY_KINDS.has(content)) {
+        this.ents.push({
+          kind: content, x: tx * TS + 2, y: ty * TS - 14, w: 12, h: 14, vx: fromDir * 1.5, vy: -2,
+          onGround: false, dir: 1, frame: 0, state: 'emerge', t: 0, dead: false, remove: false,
+          hp: 1, baseY: ty * TS - 14, homeTx: tx, variant: '', target: '', extreme: false, stun: 0,
+        });
+      } else {
+        const item = this.spawnItemFromBlock(content, tx, ty);
+        // eject sideways away from the player instead of upward
+        item.vx = fromDir * 1.5;
+        item.vy = -2;
+      }
       this.addScore(200);
     } else if (t === TILE.QuestionUsed) {
       this.level.tiles[ty][tx] = TILE.Empty;
@@ -664,7 +701,9 @@ export class Engine {
 
   /** Turn a tortoise/armadillo into its shell state (shared by stomp & ember). */
   private shellify(e: Ent): void {
-    const shellKind = e.kind === 'armadillo' ? 'armadillo' : (e.variant === 'red' ? 'red' : 'green');
+    const shellKind = e.kind === 'armadillo' ? 'armadillo'
+      : e.kind === 'tortoiseTan' ? 'tan'
+      : (e.variant === 'red' ? 'red' : 'green');
     e.kind = 'shell';
     e.state = 'still';
     e.variant = shellKind;
@@ -1234,6 +1273,32 @@ export class Engine {
           }
           const hit = this.moveX(e, e.vx, false);
           if (hit !== 0) e.vx = -hit * 0.45 * spdE;
+          e.dir = e.vx > 0 ? 1 : -1;
+          if (this.moveY(e, e.vy, false, true) === 1) { e.vy = 0; e.onGround = true; } else e.onGround = false;
+          break;
+        }
+        case 'tortoiseTan': {
+          // Tan Koopa: faster, charges when the player is near, jumps in EXTREME mode.
+          if (e.state === 'init') { e.state = 'walk'; e.vx = -0.55 * spdE; }
+          e.vy += 0.4; if (e.vy > 10) e.vy = 10;
+          const dx = p.x + p.w / 2 - (e.x + e.w / 2);
+          const dy = p.y + p.h / 2 - (e.y + e.h / 2);
+          const near = Math.abs(dx) < 110 && Math.abs(dy) < 80 && !p.dead;
+          if (near) {
+            const chargeDir = dx > 0 ? 1 : -1;
+            e.vx = chargeDir * 1.15 * spdE;
+            if (e.extreme && e.onGround && e.frame % 50 === 0) e.vy = -6.5;
+          }
+          // ledge turn for non-charging patrol
+          if (!near && e.onGround) {
+            const aheadX = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
+            const belowTy = Math.floor((e.y + e.h + 2) / TS);
+            const aheadTx = Math.floor(aheadX / TS);
+            const tBelow = tileAt(this.level, aheadTx, belowTy);
+            if (!SOLID_TILES.has(tBelow) && !ONEWAY_TILES.has(tBelow)) e.vx = -e.vx;
+          }
+          const hit = this.moveX(e, e.vx, false);
+          if (hit !== 0) e.vx = -hit * 0.55 * spdE;
           e.dir = e.vx > 0 ? 1 : -1;
           if (this.moveY(e, e.vy, false, true) === 1) { e.vy = 0; e.onGround = true; } else e.onGround = false;
           break;
@@ -1969,6 +2034,7 @@ export class Engine {
           break;
         }
         case 'tortoise':
+        case 'tortoiseTan':
         case 'armadillo': {
           if (stomp) {
             if (!this.extremeSoak(e, p, bounceMul)) {
@@ -2246,16 +2312,19 @@ export class Engine {
   private drawEnt(c: CanvasRenderingContext2D, e: Ent, sx: number, sy: number): void {
     const T2 = this.tex;
     const flip = e.dir === 1;
+    // EXTREME enemies are 1.6x bigger in hitbox and should look 1.6x bigger too.
+    // Scale from the entity's bottom-center so feet stay planted.
+    const exScale = e.extreme ? 1.6 : 1;
     const draw = (name: string, x: number, y: number, w?: number, h?: number) => {
       const img = T2.get(name);
+      const iw = w ?? img.width;
+      const ih = h ?? img.height;
+      const cx = x + iw / 2;
+      const by = y + ih;
       c.save();
-      if (flip) {
-        c.translate(x + (w ?? img.width), y);
-        c.scale(-1, 1);
-        c.drawImage(img, 0, 0, w ?? img.width, h ?? img.height);
-      } else {
-        c.drawImage(img, x, y, w ?? img.width, h ?? img.height);
-      }
+      c.translate(cx, by);
+      c.scale(flip ? -exScale : exScale, exScale);
+      c.drawImage(img, -iw / 2, -ih, iw, ih);
       c.restore();
     };
     const anim2 = Math.floor(e.frame / 12) % 2;
@@ -2269,6 +2338,7 @@ export class Engine {
     switch (e.kind) {
       case 'beetle': draw(`beetle:${anim2}`, sx - 2, sy - 3); break;
       case 'tortoise': draw(`tortoise${e.variant === 'red' ? 'Red' : 'Green'}:${anim2}`, sx - 1, sy - 2); break;
+      case 'tortoiseTan': draw(`tortoiseTan:${anim2}`, sx - 1, sy - 2); break;
       case 'armadillo': draw(`armadillo:${anim2}`, sx - 1, sy - 3); break;
       case 'shell': draw(`shell:${e.variant ?? 'green'}`, sx - 1, sy - 3); break;
       case 'durian': case 'durianDrop': draw('durian', sx - 1, sy - 2); break;
@@ -2524,8 +2594,24 @@ export class Engine {
     if (!this.level || tx < 0 || ty < 0 || tx >= this.level.width || ty >= this.level.height) return;
     if (this.editorSel.kind === 'tile') {
       this.level.tiles[ty][tx] = this.editorSel.tile;
+      // when painting a ? Block, remember (or clear) its fixed loot
+      if (this.editorSel.tile === TILE.Question) {
+        if (!this.level.questionContents) this.level.questionContents = {};
+        if (this.editorQuestionContent) this.level.questionContents[questionKey(tx, ty)] = this.editorQuestionContent;
+        else delete this.level.questionContents[questionKey(tx, ty)];
+      } else if (this.level.questionContents) {
+        delete this.level.questionContents[questionKey(tx, ty)];
+      }
     } else if (this.editorSel.kind === 'entity') {
       const type = this.editorSel.entity;
+      // "drag a powerup into a ? Block": clicking an item on a question tile sets the loot
+      const onQuestion = this.level.tiles[ty]?.[tx] === TILE.Question;
+      if (onQuestion && QUESTION_CONTENTS.has(type)) {
+        if (!this.level.questionContents) this.level.questionContents = {};
+        this.level.questionContents[questionKey(tx, ty)] = type;
+        this.editorDirty = true;
+        return;
+      }
       if (type === 'playerStart') {
         this.level.entities = this.level.entities.filter((e) => e.type !== 'playerStart');
         this.level.entities.push({ type: 'playerStart', x: tx, y: ty });
@@ -2551,6 +2637,7 @@ export class Engine {
     if (!this.level || tx < 0 || ty < 0 || tx >= this.level.width || ty >= this.level.height) return;
     this.level.tiles[ty][tx] = TILE.Empty;
     this.level.entities = this.level.entities.filter((e) => !(e.x === tx && e.y === ty));
+    if (this.level.questionContents) delete this.level.questionContents[questionKey(tx, ty)];
     this.editorDirty = true;
     this.refreshEditorEnts();
   }
