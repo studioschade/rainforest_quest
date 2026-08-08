@@ -7,7 +7,7 @@ import { loadPhysics, loadGlitches, savePhysics, saveGlitches, DEFAULT_PHYSICS, 
 import type { PhysicsConfig, GlitchFlags } from './config';
 import { cloneLevel, listCustomLevels, listWorlds } from './storage';
 import { BUILTIN_LEVELS } from './builtinLevels';
-import { emptyLevel } from './types';
+import { emptyLevel, TILE, LEVEL_HEIGHT } from './types';
 import type { LevelData, WorldData, Theme } from './types';
 import { audio } from './audio';
 import type { MusicTrack, SfxName } from './audio';
@@ -491,7 +491,25 @@ export class GameController {
   }
 
   createBlankLevel(name: string, theme: Theme, width: number): LevelData {
-    return emptyLevel(name || 'Untitled Level', theme, Math.max(40, Math.min(400, width)));
+    const level = emptyLevel(name || 'Untitled Level', theme, Math.max(40, Math.min(400, width)));
+    // Starter ground across the full width so a new level is playable
+    // immediately (same top row as the built-in levels, theme-appropriate
+    // tiles: grass overworld, stone underworld, leaves canopy, sand lagoon,
+    // temple boss).
+    const top = 18;
+    const [topTile, fillTile] =
+      theme === 'lagoon' ? [TILE.Sand, TILE.Dirt]
+      : theme === 'underworld' ? [TILE.Stone, TILE.Temple]
+      : theme === 'canopy' ? [TILE.Leaves, TILE.Leaves]
+      : theme === 'boss' ? [TILE.Temple, TILE.Stone]
+      : [TILE.Ground, TILE.Dirt];
+    for (let x = 0; x < level.width; x++) {
+      level.tiles[top][x] = topTile;
+      for (let y = top + 1; y < LEVEL_HEIGHT; y++) level.tiles[y][x] = fillTile;
+    }
+    // playerStart from emptyLevel() sits at LEVEL_HEIGHT-4, now underground
+    for (const e of level.entities) if (e.type === 'playerStart') e.y = top - 2;
+    return level;
   }
 
   toggleEditor(): void {

@@ -312,10 +312,17 @@ function buildLagoon(): LevelData {
 
   // one long sand bed; swim basins are carved into it
   sand(0, 150);
-  /** Carve a swim basin: SwimWater from depthRow down, sandy floor on the last 2 rows. */
+  /** Carve a swim basin: SwimWater from depthRow down, sandy floor on the
+   *  last 2 rows, and sand retaining walls up the sides to the surface —
+   *  without the walls the water columns above the bed (rows < 18) border
+   *  open air, since the bed alone only contains rows 18+. */
   const basin = (x: number, w: number, depthRow: number) => {
     fill(l, x, depthRow, w, H - depthRow, T.SwimWater);
     fill(l, x, H - 2, w, 2, T.Sand);
+    if (depthRow < top) {
+      fill(l, x - 1, depthRow, 1, top - depthRow, T.Sand);
+      fill(l, x + w, depthRow, 1, top - depthRow, T.Sand);
+    }
   };
 
   ent(l, 'playerStart', 2, top - 2);

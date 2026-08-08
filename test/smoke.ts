@@ -18,7 +18,7 @@ const ctxStub = (): any => new Proxy({}, {
 import { Engine } from '../src/game/engine';
 import { generateTextures } from '../src/game/textures';
 import { BUILTIN_LEVELS } from '../src/game/builtinLevels';
-import { TILE } from '../src/game/types';
+import { TILE, SOLID_TILES } from '../src/game/types';
 import type { InputState, SessionState } from '../src/game/engine';
 import { DEFAULT_PHYSICS, DEFAULT_GLITCHES } from '../src/game/config';
 
@@ -39,6 +39,28 @@ for (const l of BUILTIN_LEVELS) {
   ok(goals.length >= 1, `${l.name}: has goal/gong`);
   ok(l.entities.every((e) => e.x >= 0 && e.x < l.width && e.y >= 0 && e.y < l.height), `${l.name}: entities in bounds`);
   ok(l.tiles.every((row) => row.every((t) => Number.isInteger(t) && t >= 0 && t <= TILE.Sand)), `${l.name}: tile ids valid`);
+  // liquids must be horizontally contained: no water/lava column open to
+  // thin air (or decor) on a side — every side neighbor is solid or liquid
+  const LIQUIDS = new Set([TILE.Water, TILE.SwimWater, TILE.Lava]);
+  let unbounded = 0;
+  for (let y = 0; y < l.height; y++) for (let x = 0; x < l.width; x++) {
+    if (!LIQUIDS.has(l.tiles[y][x])) continue;
+    for (const nx of [x - 1, x + 1]) {
+      const t = nx < 0 || nx >= l.width ? TILE.Stone : l.tiles[y][nx]; // world sides are solid
+      if (!SOLID_TILES.has(t) && !LIQUIDS.has(t)) unbounded++;
+    }
+  }
+  ok(unbounded === 0, `${l.name}: all liquids walled in (${unbounded} open)`);
+}
+
+// editor: blank levels come with a full-width starter ground + start above it
+{
+  const lvl = controller.createBlankLevel('Test Blank', 'overworld', 60);
+  const solidRow = (y: number) => lvl.tiles[y].every((t) => SOLID_TILES.has(t));
+  ok(solidRow(18) && solidRow(lvl.height - 1), 'blank editor level: ground spans the full width');
+  const ps = lvl.entities.find((e) => e.type === 'playerStart')!;
+  ok(ps.y < 18 && !SOLID_TILES.has(lvl.tiles[ps.y][ps.x]), 'blank editor level: playerStart above the ground, not in it');
+  ok(SOLID_TILES.has(lvl.tiles[18][3]), 'blank editor level: solid ground under the playerStart');
 }
 
 // saga order: the five-level built-in sequence

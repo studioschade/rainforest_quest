@@ -218,6 +218,16 @@ function tileLava(frame: number): HTMLCanvasElement {
   });
 }
 
+/** Lava body — used for every lava tile NOT on the surface layer (no crest). */
+function tileLavaDeep(frame: number): HTMLCanvasElement {
+  return mk(16, 16, (c) => {
+    px(c, 0, 0, 16, 16, PAL.lava);
+    const rnd = mulberry32(41 + frame * 17);
+    for (let i = 0; i < 8; i++) px(c, Math.floor(rnd() * 15), Math.floor(rnd() * 15), 2, 1, PAL.lavaDk);
+    for (let i = 0; i < 4; i++) px(c, Math.floor(rnd() * 15), Math.floor(rnd() * 15), 1, 1, PAL.lavaHi);
+  });
+}
+
 /** Water surface, 2 animation frames. */
 function tileWater(frame: number): HTMLCanvasElement {
   return mk(16, 16, (c) => {
@@ -229,6 +239,27 @@ function tileWater(frame: number): HTMLCanvasElement {
     }
     px(c, 2, 6, 2, 1, PAL.waterHi); px(c, 10, 10, 2, 1, PAL.waterHi);
     px(c, 0, 0, 16, 16, 'rgba(46,163,199,0.25)');
+  });
+}
+
+/** Water body — every water tile below the surface layer (no crest). */
+function tileWaterDeep(frame: number): HTMLCanvasElement {
+  return mk(16, 16, (c) => {
+    px(c, 0, 0, 16, 16, PAL.water);
+    px(c, 0, 0, 16, 16, 'rgba(27,111,140,0.35)'); // darker with depth
+    const rnd = mulberry32(93 + frame * 7);
+    for (let i = 0; i < 5; i++) px(c, Math.floor(rnd() * 14), Math.floor(rnd() * 15), 2, 1, PAL.waterDk);
+    px(c, 3 + frame * 4, 5, 2, 1, PAL.waterHi); px(c, 11 - frame * 4, 11, 2, 1, PAL.waterHi);
+  });
+}
+
+/** Swimmable-water body — below the surface layer (translucent, no crest). */
+function tileSwimWaterDeep(frame: number): HTMLCanvasElement {
+  return mk(16, 16, (c) => {
+    px(c, 0, 0, 16, 16, 'rgba(38,190,205,0.45)');
+    px(c, 0, 3, 16, 13, 'rgba(24,150,185,0.4)');
+    const rnd = mulberry32(55 + frame * 11);
+    for (let i = 0; i < 4; i++) px(c, Math.floor(rnd() * 14), 2 + Math.floor(rnd() * 13), 2, 1, 'rgba(200,245,255,0.4)');
   });
 }
 
@@ -1489,7 +1520,10 @@ export function generateTextures(): TexAtlas {
   put('vine', tileVine());
   put('wood', tileWood());
   put('cloud', tileCloud());
-  for (let f = 0; f < 2; f++) { put(`lava:${f}`, tileLava(f)); put(`water:${f}`, tileWater(f)); put(`swimWater:${f}`, tileSwimWater(f)); }
+  for (let f = 0; f < 2; f++) {
+    put(`lava:${f}`, tileLava(f)); put(`water:${f}`, tileWater(f)); put(`swimWater:${f}`, tileSwimWater(f));
+    put(`lavaDeep:${f}`, tileLavaDeep(f)); put(`waterDeep:${f}`, tileWaterDeep(f)); put(`swimWaterDeep:${f}`, tileSwimWaterDeep(f));
+  }
   put('sand', tileSand());
   for (let f = 0; f < 2; f++) { put(`swimfish:${f}`, swimfishSprite(f)); put(`staticStarfruit:${f}`, starfruitSprite(f)); }
   put('warpJar', warpJarSprite());

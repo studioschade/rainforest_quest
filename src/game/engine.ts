@@ -2037,15 +2037,27 @@ export class Engine {
           case TILE.Vine: name = 'vine'; break;
           case TILE.Wood: name = 'wood'; break;
           case TILE.Cloud: name = 'cloud'; break;
-          case TILE.Lava: name = `lava:${Math.floor(this.tick / 24) % 2}`; break;
-          case TILE.Water: name = `water:${Math.floor(this.tick / 24) % 2}`; break;
+          case TILE.Lava: {
+            const f = Math.floor(this.tick / 24) % 2;
+            name = ty > 0 && this.level.tiles[ty - 1][tx] === TILE.Lava ? `lavaDeep:${f}` : `lava:${f}`;
+            break;
+          }
+          case TILE.Water: {
+            const f = Math.floor(this.tick / 24) % 2;
+            name = ty > 0 && this.level.tiles[ty - 1][tx] === TILE.Water ? `waterDeep:${f}` : `water:${f}`;
+            break;
+          }
           case TILE.Spikes: name = 'spikes'; break;
           case TILE.Bridge: name = 'bridge'; break;
           case TILE.Leaves: name = 'leaves'; break;
           case TILE.Foliage: name = `foliage:${(tx + ty) % 2}`; break;
           case TILE.Temple: name = 'temple'; break;
           case TILE.GongTile: name = 'gongStand'; break;
-          case TILE.SwimWater: name = `swimWater:${Math.floor(this.tick / 24) % 2}`; break;
+          case TILE.SwimWater: {
+            const f = Math.floor(this.tick / 24) % 2;
+            name = ty > 0 && this.level.tiles[ty - 1][tx] === TILE.SwimWater ? `swimWaterDeep:${f}` : `swimWater:${f}`;
+            break;
+          }
           case TILE.Sand: name = 'sand'; break;
           default: break;
         }
@@ -2099,12 +2111,20 @@ export class Engine {
       c.fillRect(0, 0, VIEW_W, VIEW_H);
     }
 
-    // Static Starfruit glitch post-processing (ramps in over ~30f, out at the end)
+    // Static Starfruit glitch post-processing (ramps in over ~30f, out at the
+    // end). Runs AFTER c.restore(), so the base 2x game transform is still
+    // active — the canvas self-copies below must reset to the identity
+    // transform and work in PHYSICAL pixels, or they re-draw the frame at 2x
+    // (the whole scene appears to zoom into its top-left quarter) and the
+    // tear strips sample only the left half of the screen.
     if (this.glitchFx && !this.editorMode) {
       const fx = this.glitchFx;
       const k = Math.min(1, fx.elapsed / 30) * (fx.t < 30 ? Math.max(0, fx.t / 30) : 1);
       this.sliceTick++;
       const cv = this.canvas;
+      const W = cv.width, H = cv.height;
+      c.save();
+      c.setTransform(1, 0, 0, 1, 0, 0);
       // hue/saturation jitter (where canvas filters are supported)
       if ('filter' in c) {
         try {
@@ -2120,22 +2140,23 @@ export class Engine {
           this.sliceShift[i] = Math.random() < 0.3 ? Math.round((Math.random() * 2 - 1) * 6 * k) : 0;
         }
       }
-      const stripH = Math.ceil(VIEW_H / n);
+      const stripH = Math.ceil(H / n);
       for (let i = 0; i < n; i++) {
         const off = this.sliceShift[i];
-        if (off !== 0) c.drawImage(cv, 0, i * stripH, VIEW_W, stripH, off, i * stripH, VIEW_W, stripH);
+        if (off !== 0) c.drawImage(cv, 0, i * stripH, W, stripH, off * 2, i * stripH, W, stripH);
       }
       // color washes
       c.fillStyle = `rgba(255,0,90,${(0.035 * k).toFixed(3)})`;
-      c.fillRect(0, 0, VIEW_W, VIEW_H);
+      c.fillRect(0, 0, W, H);
       c.fillStyle = `rgba(0,240,200,${(0.02 * k).toFixed(3)})`;
-      c.fillRect(0, 0, VIEW_W, VIEW_H);
+      c.fillRect(0, 0, W, H);
       // occasional scanlines
       if (Math.random() < 0.45 * k) {
         c.fillStyle = 'rgba(0,0,0,0.12)';
-        const y0 = Math.floor(Math.random() * 4);
-        for (let y = y0; y < VIEW_H; y += 4) c.fillRect(0, y, VIEW_W, 1);
+        const y0 = Math.floor(Math.random() * 8);
+        for (let y = y0; y < H; y += 8) c.fillRect(0, y, W, 2);
       }
+      c.restore();
     }
   }
 
